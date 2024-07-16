@@ -2,6 +2,7 @@ import "./index.css";
 import { useReducer, useState, useRef, useEffect } from "react";
 import Button from "./components/Button";
 import Navbar from "./components/Navbar";
+import LoginPage from "./pages/LoginPage";
 
 
 // //costum hook
@@ -57,8 +58,9 @@ function App() {
   return(
     <div>
       <Navbar />
-      
+      <LoginPage />  
     </div> 
+    
 
     
   )
