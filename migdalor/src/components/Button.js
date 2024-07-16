@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 
 // Define the Button component
 const Button = ({
-  label,
+  type = '',
   onClick,
   disabled = false,
-  type = 'button',
   className = '',
   icon: Icon = null,
+  label,
 }) => 
 {
   return (
@@ -18,7 +18,7 @@ const Button = ({
       disabled={disabled}
       className={`
       flex gap-[10px] justify-end items-center shrink-0 flex-nowrap 
-      bg-[#585858] border-none relative pointer`}
+      bg-[#585858] border-none relative pointer hover:bg-[#246B35]`}
     >
       {Icon && <Icon className="btn-icon" />}
       {label}

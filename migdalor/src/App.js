@@ -1,6 +1,7 @@
 import "./index.css";
 import { useReducer, useState, useRef, useEffect } from "react";
 import Button from "./components/Button";
+import Navbar from "./components/Navbar";
 
 
 // //costum hook
@@ -16,15 +17,15 @@ import Button from "./components/Button";
 //   ];
 // }
 
-function GithubUser({name, id, avatar}){
-  return(
-  <div>
-    <h1>{name}</h1>
-    <p>{id}</p>
-    <img src={avatar} height={150} alt={name}/>
-  </div>
-);
-}
+// function GithubUser({name, id, avatar}){
+//   return(
+//   <div>
+//     <h1>{name}</h1>
+//     <p>{id}</p>
+//     <img src={avatar} height={150} alt={name}/>
+//   </div>
+// );
+// }
 
 function App() {
   // const [titleProps, resetTitle] = useInput("");
@@ -36,39 +37,28 @@ function App() {
   //   resetColor();
   // };
 
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  // const [data, setData] = useState(null);
+  // const [error, setError] = useState(null);
+  // const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setLoading(true);
-    fetch(`https://api.github.com/users/edenbar01`)
-    .then((response) => response.json())
-    .then(setData)
-    .then(() => setLoading(false))
-    .catch(setError);
-  }, []);
+  // useEffect(() => {
+  //   setLoading(true);
+  //   fetch(`https://api.github.com/users/edenbar01`)
+  //   .then((response) => response.json())
+  //   .then(setData)
+  //   .then(() => setLoading(false))
+  //   .catch(setError);
+  // }, []);
 
-  if (loading) return <h1>Loading...</h1>;
-  if (error) return <pre>{JSON.stringify(error)}</pre>
-  if (!data) return null;
+  // if (loading) return <h1>Loading...</h1>;
+  // if (error) return <pre>{JSON.stringify(error)}</pre>
+  // if (!data) return null;
 
   return(
-    // <div>
-    //   <GithubUser 
-    //     name={data.name}
-    //     id={data.id}
-    //     avatar={data.avatar_url}
-    // />
-    <Button
-    type="button"
-    label="click"
-    onClick={null}
-    icon={null}>
-
-    </Button>
-
-    /* </div> */
+    <div>
+      <Navbar />
+      
+    </div> 
 
     
   )
