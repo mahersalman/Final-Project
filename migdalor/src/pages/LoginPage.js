@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const LoginPage = () => {
@@ -8,44 +9,61 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const data = JSON.stringify({
-      "collection": "yourCollectionName",
-      "database": "yourDatabaseName",
-      "dataSource": "migdalor",
-      "filter": { "username": username },
-      "projection": { "_id": 1, "username": 1, "password": 1 }
-    });
-
-    const config = {
-      method: 'post',
-      url: 'https://eu-central-1.aws.data.mongodb-api.com/app/data-hkqpcmv/endpoint/data/v1/action/findOne',
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Request-Headers': '*',
-        'Authorization': 'Bearer <ACCESS_TOKEN>', // Replace <ACCESS_TOKEN> with your actual access token
-      },
-      data: data
-    };
-
-    try {
-      const response = await axios(config);
-      const user = response.data.document;
-
-      if (user && user.password === password) {
-        setSuccess('Login successful');
-        setError('');
-      } else {
-        setError('Invalid username or password');
-        setSuccess('');
+    if (username === 'admin' && password === 'Aa123456') {
+      // Successful login
+      if (rememberMe) {
+        // Implement remember me functionality here
+        // For example, you could store a token in localStorage
+        localStorage.setItem('isLoggedIn', 'true');
       }
-    } catch (error) {
-      console.error(error);
-      setError('An error occurred during login');
-      setSuccess('');
+      // Redirect to HomePage
+      navigate('/home');
+    } else {
+      setError('Invalid username or password');
     }
+
+    // e.preventDefault();
+
+    // const data = JSON.stringify({
+    //   "collection": "yourCollectionName",
+    //   "database": "yourDatabaseName",
+    //   "dataSource": "migdalor",
+    //   "filter": { "username": username },
+    //   "projection": { "_id": 1, "username": 1, "password": 1 }
+    // });
+
+    // const config = {
+    //   method: 'post',
+    //   url: 'https://eu-central-1.aws.data.mongodb-api.com/app/data-hkqpcmv/endpoint/data/v1/action/findOne',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Access-Control-Request-Headers': '*',
+    //     'Authorization': 'Bearer <ACCESS_TOKEN>', // Replace <ACCESS_TOKEN> with your actual access token
+    //   },
+    //   data: data
+    // };
+
+    // try {
+    //   const response = await axios(config);
+    //   const user = response.data.document;
+
+    //   if (user && user.password === password) {
+    //     setSuccess('Login successful');
+    //     setError('');
+    //   } else {
+    //     setError('Invalid username or password');
+    //     setSuccess('');
+    //   }
+    // } catch (error) {
+    //   console.error(error);
+    //   setError('An error occurred during login');
+    //   setSuccess('');
+    // }
   };
 
   return (
@@ -80,18 +98,6 @@ const LoginPage = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
                 required
               />
-            </div>
-            <div className="mb-6 w-full">
-              <label htmlFor="rememberMe" className="flex ">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="mr-2"
-                />
-                שמור אותי מחובר
-              </label>
             </div>
             <button
               type="submit"
