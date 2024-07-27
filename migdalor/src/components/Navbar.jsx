@@ -2,7 +2,7 @@ import React from 'react';
 import { RiHome4Line } from "react-icons/ri";
 import { PiClockClockwise } from "react-icons/pi";
 import { LuUsers } from "react-icons/lu";
-import { HiOutlineClipboardDocumentCheck } from "react-icons/hi2";
+import { AiOutlineProduct } from "react-icons/ai";
 
 import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
 
@@ -21,16 +21,17 @@ const Navbar = () => {
       שיבוץ עמדות
       </span>
      </Link></li>
-     <li className='hover:bg-[#246B35] rounded-[7px] hover:text-white'><Link className="px-3 py-2 rounded flex items-center space-x-2" to="/">
+     <li className='hover:bg-[#246B35] rounded-[7px] hover:text-white'><Link className="px-3 py-2 rounded flex items-center space-x-2" 
+     to="migdalor/src/pages/WorkersPage.js">
      <LuUsers />
      <span>
      עובדים
      </span>
      </Link></li>
      <li className='hover:bg-[#246B35] rounded-[7px] hover:text-white'><Link className="px-3 py-2 rounded flex items-center space-x-2" to="/">
-      <HiOutlineClipboardDocumentCheck />
+      <AiOutlineProduct />
       <span>
-     דוחות
+     מעקב תפוקות
      </span>
      </Link></li>
 
