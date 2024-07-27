@@ -18,8 +18,8 @@ function ShlokerCheck() {
     };
 
     const intervalId = setInterval(() => {
-      mockData.proper += Math.random() * 3;
-      mockData.improper += Math.random();
+      mockData.proper += Math.ceil(Math.random()) * 3;
+      mockData.improper += Math.ceil(Math.random());
       setCounterData({ ...mockData });
     }, 3000); // Update every 3 seconds
 
@@ -38,12 +38,12 @@ function ShlokerCheck() {
 
   return (
    <div className="flex flex-col items-center">
-   <div className="flex w-full justify-center">
-     <div className="flex items-center justify-center w-1/2 bg-blue-100 p-4">
-       <h2 className="text-xl font-bold">Proper Items: {counterData.proper}</h2>
+   <div className="flex w-11/12 justify-center gap-9">
+     <div className="flex items-center justify-center w-1/2 h-15 bg-green-100 p-4 rounded-lg m-5">
+       <h2 className="text-xl font-bold">רכיבים תקינים: {counterData.proper}</h2>
      </div>
-     <div className="flex items-center justify-center w-1/2 bg-green-100 p-4">
-       <h2 className="text-xl font-bold">Improper Items: {counterData.improper}</h2>
+     <div className="flex items-center justify-center w-1/2 bg-red-100 p-4 rounded-lg m-5">
+       <h2 className="text-xl font-bold">רכיבים פגומים: {counterData.improper}</h2>
      </div>
    </div>
    <div className="w-60 h-60">
