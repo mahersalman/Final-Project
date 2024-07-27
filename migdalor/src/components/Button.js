@@ -18,7 +18,7 @@ const Button = ({
       disabled={disabled}
       className={`
       flex gap-[10px] justify-end items-center shrink-0 flex-nowrap 
-      bg-[#585858] border-none relative pointer hover:bg-[#246B35]`}
+      bg-[#1F6231] border-none relative pointer hover:bg-[#32cb56] text-white rounded-lg p-2 m-10`}
     >
       {Icon && <Icon className="btn-icon" />}
       {label}
