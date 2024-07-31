@@ -18,7 +18,7 @@ function ShlokerCheck() {
     };
 
     const intervalId = setInterval(() => {
-      mockData.proper += Math.ceil(Math.random()) * 3;
+      mockData.proper += Math.ceil(Math.random()) * 5;
       mockData.improper += Math.ceil(Math.random());
       setCounterData({ ...mockData });
     }, 3000); // Update every 3 seconds

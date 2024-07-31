@@ -7,10 +7,11 @@ const EmployeeCard = ({ employee }) => {
 
   return (
     <div className="bg-white shadow-lg rounded-lg p-6 max-w-sm mx-auto">
-      <h2 className="text-2xl font-bold mb-4">{employee.name}</h2>
-      <p className="text-gray-600 mb-2">ID: {employee.id}</p>
-      <p className="text-gray-600 mb-2">Department: {employee.department}</p>
-     <p className="text-gray-600 mb-2">Phone: {employee.phone}</p>
+      <h2 className="text-2xl font-bold mb-4">{`${employee.first_name} ${employee.last_name}`}</h2>
+      <p className="text-gray-600 mb-2">תעודת זהות: {employee.person_id}</p>
+      <p className="text-gray-600 mb-2">מחלקה: {employee.department}</p>
+      <p className="text-gray-600 mb-2">טלפון: {employee.phone}</p>
+      <p className="text-gray-600 mb-2">תאריך לידה: {new Date(employee.birth_date).toLocaleDateString()}</p>
     </div>
   );
 };
