@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import EmployeeCard from './EmployeeCard';
 import AddEmployeeForm from './AddEmployeeForm';
+import DepartmentDropdown from '../DepartmentDropdown';
+import { FaFileExcel } from "react-icons/fa";
 import * as XLSX from 'xlsx';
 
 const EmployeeItem = () => {
   const [employees, setEmployees] = useState([
-    { id: 1, name: "John Doe", department: "Developer", phone: "123-456-7890" },
-    { id: 2, name: "Jane Smith", department: "Designer", phone: "098-765-4321" },
-    { id: 3, name: "Bob Johnson", department: "Manager", phone: "555-555-5555" },
+    { id: 1, name: "John Doe", department: "הרכבות 1", phone: "123-456-7890" },
+    { id: 2, name: "Jane Smith", department: "הרכבות 1", phone: "098-765-4321" },
+    { id: 3, name: "Bob Johnson", department: "פלקס", phone: "555-555-5555" },
   ]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState('all');
@@ -49,14 +51,12 @@ const EmployeeItem = () => {
       <div className="w-1/3 pr-6">
         <h1 className="text-3xl font-bold mb-4">עובדים</h1>
         <label>סינון עובדים לפי מחלקה </label>
-        <select value={selectedDepartment} onChange={handleDepartmentChange}>
-          <option value="all">כל המחלקות</option>
-          {[...new Set(employees.map(emp => emp.department))].map(department => (
-            <option key={department} value={department}>
-              {department}
-            </option>
-          ))}
-        </select>
+        <DepartmentDropdown
+          value={selectedDepartment}
+          onChange={handleDepartmentChange}
+          includeAllOption={true}
+          className="p-1 m-1"
+        />
         <ul className="space-y-2">
           {filteredEmployees.map((emp) => (
             <li
@@ -74,12 +74,13 @@ const EmployeeItem = () => {
         </ul>
         <button
           onClick={exportToExcel}
-          className="my-4 bg-[#1F6231] border-none relative pointer hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
+          className="my-4 flex justify-between bg-[#1F6231] border-none relative pointer hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
         >
+          <FaFileExcel />
           ייצא ל-Excel
         </button>
       </div>
-      <div className="w-2/3">
+      <div className="w-2/3 mx-16">
         <EmployeeCard employee={selectedEmployee} />
         <button
           onClick={() => setShowAddForm(true)}
