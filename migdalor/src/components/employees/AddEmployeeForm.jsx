@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import DepartmentDropdown from '../DepartmentDropdown'
+import StationSelector from '../StationSelector';
 
 const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
   const [fname, setFName] = useState('');  
@@ -7,6 +9,8 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
   const [phone, setPhone] = useState('');
   const [id, setId] = useState('');
   const [bdate, setBdate] = useState('');
+  const [stations, setStations] = useState([]); // State for selected stations
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -53,15 +57,17 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
             />
           </div>
           <div className="mb-4">
-            <label className="block mb-2">מחלקה:</label>
-            <input
-              type="text"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="w-full border p-2 rounded"
-              required
-            />
+          <label>בחירת מחלקה: </label>
+          <DepartmentDropdown
+            value={department}
+            onChange={(e) => setDepartment(e.target.value)}
+            className="w-full p-2"
+          />
           </div>
+          <StationSelector
+            selectedStations={stations}
+            onChange={setStations}
+          />
           <div className="mb-4">
             <label className="block mb-2">טלפון:</label>
             <input
