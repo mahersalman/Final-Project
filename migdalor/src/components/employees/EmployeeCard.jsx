@@ -17,7 +17,11 @@ const EmployeeCard = ({ employee, onUpdateEmployee }) => {
   };
 
   const handleUpdateEmployee = (updatedInfo) => {
-    onUpdateEmployee({ ...employee, ...updatedInfo });
+    if (typeof onUpdateEmployee === 'function') {
+      onUpdateEmployee({ ...employee, ...updatedInfo });
+    } else {
+      console.error('onUpdateEmployee is not a function', onUpdateEmployee);
+    }
     setIsEditFormOpen(false);
   };
 
@@ -31,10 +35,9 @@ const EmployeeCard = ({ employee, onUpdateEmployee }) => {
       <button
         onClick={handleEditClick}
         className="my-4 bg-[#1F6231] border-none relative pointer hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
-        >
+      >
         ערוך פרטים
       </button>
-
       {isEditFormOpen && (
         <EditEmployeeForm
           employee={employee}

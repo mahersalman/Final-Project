@@ -6,8 +6,8 @@ const personSchema = new mongoose.Schema({
   last_name: String,
   department: String,
   phone: String,
-  birth_date: date,
-  role: String
+  birth_date: Date,
+  role: String,
 }, { collection: 'person' });
 
 module.exports = mongoose.model('Person', personSchema);

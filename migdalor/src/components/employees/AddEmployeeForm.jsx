@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios'; 
 import DepartmentDropdown from '../DepartmentDropdown'
 import StationSelector from '../StationSelector';
 
@@ -10,13 +11,42 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
   const [id, setId] = useState('');
   const [bdate, setBdate] = useState('');
   const [stations, setStations] = useState([]); // State for selected stations
+  const [stationAverages, setStationAverages] = useState({});
 
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
+    console.log('Submit button clicked');
     e.preventDefault();
-    onAddEmployee({ fname, lname, department, phone });
-    onClose();
+    try {
+      // Save employee to person table
+      const employeeResponse = await axios.post('http://localhost:5001/api/employees', {
+        person_id: id,
+        first_name: fname,
+        last_name: lname,
+        department,
+        phone,
+        birth_date: bdate,
+        role: 'Employee',
+      });
+
+      // Save qualifications to qualification table
+      const qualificationPromises = Object.entries(stationAverages).map(([station, avg]) => 
+        axios.post('http://localhost:5001/api/qualifications', {
+          person_id: id,
+          station_name: station,
+          avg: parseFloat(avg)
+        })
+      );
+
+      await Promise.all(qualificationPromises);
+
+      onAddEmployee(employeeResponse.data);
+      onClose();
+    } catch (error) {
+      console.error('Error adding employee:', error);
+      // Handle error (e.g., show error message to user)
+    }
   };
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
@@ -67,6 +97,7 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
           <StationSelector
             selectedStations={stations}
             onChange={setStations}
+            onAverageChange={setStationAverages}
           />
           <div className="mb-4">
             <label className="block mb-2">טלפון:</label>
