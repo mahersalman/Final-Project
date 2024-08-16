@@ -2,9 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
-
-const app = express(); // Initialize app before using it
-
+const app = express();
 const port = process.env.PORT || 5001;
 
 // Middleware
@@ -14,6 +12,8 @@ app.use(express.json());
 // Import routes after initializing app
 const userRouter = require('./routes/users');
 const Station = require('./models/station');
+const Person = require('./models/person');
+const Qualification = require('./models/qualification'); 
 
 const mongoURI = "mongodb+srv://admin:Aa112233@migdalor.uqujiwf.mongodb.net/migdalor?retryWrites=true&w=majority&appName=migdalor";
 console.log('Mongo URI:', mongoURI);
@@ -25,7 +25,6 @@ mongoose.connect(mongoURI, {
 })
 .then(() => {
   console.log('MongoDB connected');
-  // Log the name of the connected database
   console.log('Connected to database:', mongoose.connection.name);
   if (mongoose.connection.db.databaseName !== 'migdalor') {
     console.error('Warning: Connected to incorrect database. Expected "migdalor", got "' + mongoose.connection.db.databaseName + '"');
@@ -33,11 +32,10 @@ mongoose.connect(mongoURI, {
 })
 .catch(err => console.log(err));
 
-
 // Define Routes
-app.use('/users', userRouter); // Use the app object after initialization
+app.use('/users', userRouter);
 
-
+//get all stations
 app.get('/api/stations', async (req, res) => {
   try {
     console.log('Attempting to fetch stations...');
@@ -51,9 +49,131 @@ app.get('/api/stations', async (req, res) => {
   }
 });
 
+//get all employees
+app.get('/api/employees', async (req, res) => {
+  try {
+    console.log('Attempting to fetch persons...');
+    const employees = await Person.find({});
+    console.log('Fetched persons:', employees);
+    console.log('Number of persons found:', employees.length);
+    res.json(employees);
+  } catch (error) {
+    console.error('Error fetching employees:', error);
+    res.status(500).json({ message: 'Error fetching employees', error: error.message });
+  }
+});
+
+//route to save a person
+app.post('/api/employees', async (req, res) => {
+  try {
+    const newPerson = new Person({
+      person_id: req.body.person_id,
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
+      department: req.body.department,
+      phone: req.body.phone,
+      birth_date: new Date(req.body.birth_date),
+      role: req.body.role || 'Employee'
+    });
+
+    const savedPerson = await newPerson.save();
+    console.log('New person saved:', savedPerson);
+    res.status(201).json(savedPerson);
+  } catch (error) {
+    console.error('Error saving person:', error);
+    res.status(500).json({ message: 'Error saving person', error: error.message });
+  }
+});
+
+//save new qualications for employee
+app.post('/api/qualifications', async (req, res) => {
+  try {
+    const { person_id, station_name, avg } = req.body;
+    const newQualification = new Qualification({
+      person_id,
+      station_name,
+      avg
+    });
+    const savedQualification = await newQualification.save();
+    res.status(201).json(savedQualification);
+  } catch (error) {
+    console.error('Error saving qualification:', error);
+    res.status(500).json({ message: 'Error saving qualification', error: error.message });
+  }
+});
+
+// Update or create employee qualifications
+app.post('/api/qualifications', async (req, res) => {
+  try {
+    const { person_id, station_name, avg } = req.body;
+    console.log('Received qualification update request:', { person_id, station_name, avg });
+
+    // First, find the person by their person_id
+    const person = await Person.findOne({ person_id });
+    if (!person) {
+      return res.status(404).json({ message: 'Person not found' });
+    }
+
+    // Check if a qualification already exists
+    let qualification = await Qualification.findOne({ person_id: person._id, station_name });
+
+    if (qualification) {
+      // If qualification exists, update it
+      qualification.avg = avg;
+      await qualification.save();
+      console.log('Qualification updated:', qualification);
+    } else {
+      // If qualification doesn't exist, create a new one
+      qualification = new Qualification({
+        person_id: person._id,
+        station_name,
+        avg
+      });
+      await qualification.save();
+      console.log('New qualification created:', qualification);
+    }
+
+    res.json(qualification);
+  } catch (error) {
+    console.error('Error updating/creating qualification:', error);
+    res.status(500).json({ message: 'Error updating/creating qualification', error: error.message });
+  }
+});
+
+
+
+// Get employee qualifications
+app.get('/api/qualifications/:employeeId', async (req, res) => {
+  try {
+    console.log('Fetching qualifications for employeeId:', req.params.employeeId);
+    const qualifications = await Qualification.find({ person_id: req.params.employeeId });
+    console.log('Qualifications found:', qualifications);
+    res.json(qualifications);
+  } catch (error) {
+    console.error('Error fetching qualifications:', error);
+    res.status(500).json({ message: 'Error fetching qualifications', error: error.message });
+  }
+});
+
+// Update employee data
+app.put('/api/employees/:employeeId', async (req, res) => {
+  try {
+    const updatedEmployee = await Person.findOneAndUpdate(
+      { person_id: req.params.employeeId },
+      { $set: req.body },
+      { new: true }
+    );
+    if (!updatedEmployee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    res.json(updatedEmployee);
+  } catch (error) {
+    console.error('Error updating employee:', error);
+    res.status(500).json({ message: 'Error updating employee', error: error.message });
+  }
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
 });
-
-
