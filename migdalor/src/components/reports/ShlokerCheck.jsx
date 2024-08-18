@@ -39,6 +39,7 @@ function ShlokerCheck() {
   return (
    <div className="flex flex-col items-center">
    <div className="flex w-11/12 justify-center gap-9">
+    <h1 className='text-4xl font-bold'>תוצרת יומית</h1>
      <div className="flex items-center justify-center w-1/2 h-15 bg-green-100 p-4 rounded-lg m-5">
        <h2 className="text-xl font-bold">רכיבים תקינים: {counterData.proper}</h2>
      </div>
