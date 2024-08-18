@@ -49,7 +49,6 @@ const ReportGenerator = () => {
     );
   };
 
-
   const handleGenerateReport = () => {
     const reportData = {
       employee: selectedEmployee,
@@ -61,8 +60,8 @@ const ReportGenerator = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-4">יצירת דוח</h2>
+    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md max-w-3xl mx-auto">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 text-center">יצירת דוח</h2>
       
       <div className="mb-4">
         <label className="block mb-2 font-semibold">בחר עובד (אופציונלי)</label>
@@ -73,16 +72,16 @@ const ReportGenerator = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full p-2 border rounded mb-2"
         />
-        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg">
+        <div className="max-h-40 sm:max-h-48 overflow-y-auto border border-gray-300 rounded-lg">
           {filteredEmployees.length === 0 ? (
             <p className="p-4 text-center text-gray-500">לא נמצאו עובדים</p>
           ) : (
-            <ul className="space-y-2 p-2">
+            <ul className="space-y-1 sm:space-y-2 p-2">
               {filteredEmployees.map((emp) => (
                 <li
                   key={emp._id}
                   onClick={() => setSelectedEmployee(emp)}
-                  className={`cursor-pointer p-3 rounded transition duration-150 ease-in-out ${
+                  className={`cursor-pointer p-2 sm:p-3 rounded transition duration-150 ease-in-out ${
                     selectedEmployee && selectedEmployee._id === emp._id
                       ? 'bg-[#246B35] text-white'
                       : 'hover:bg-gray-100'
@@ -109,21 +108,19 @@ const ReportGenerator = () => {
 
       <div className="mb-4">
         <label className="block mb-2 font-semibold">בחר תחנות (אופציונלי)</label>
-        <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg shadow-inner bg-white">
+        <div className="max-h-40 sm:max-h-48 overflow-y-auto border border-gray-300 rounded-lg shadow-inner bg-white">
           {stations.length > 0 ? (
             stations.map((station, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-150">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`station-${index}`}
-                    value={station}
-                    checked={selectedStations.includes(station)}
-                    onChange={() => handleStationChange(station)}
-                    className="form-checkbox h-5 w-5 text-[#1F6231] rounded border-gray-300 focus:ring-[#1F6231] transition duration-150 ease-in-out"
-                  />
-                  <label htmlFor={`station-${index}`} className="ml-3 text-sm font-medium text-gray-700">{station}</label>
-                </div>
+              <div key={index} className="flex items-center p-2 sm:p-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-150">
+                <input
+                  type="checkbox"
+                  id={`station-${index}`}
+                  value={station}
+                  checked={selectedStations.includes(station)}
+                  onChange={() => handleStationChange(station)}
+                  className="form-checkbox h-4 w-4 sm:h-5 sm:w-5 text-[#1F6231] rounded border-gray-300 focus:ring-[#1F6231] transition duration-150 ease-in-out"
+                />
+                <label htmlFor={`station-${index}`} className="ml-2 sm:ml-3 text-sm font-medium text-gray-700">{station}</label>
               </div>
             ))
           ) : (
@@ -132,7 +129,7 @@ const ReportGenerator = () => {
         </div>
       </div>
 
-      <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+      <div className="mt-4 p-3 sm:p-4 bg-gray-100 rounded-lg text-sm sm:text-base">
         <h3 className="font-semibold mb-2">תנאי הדוח הנוכחי:</h3>
         <ul className="list-disc list-inside">
           <li>עובד: {selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : 'לא נבחר'}</li>
@@ -143,7 +140,7 @@ const ReportGenerator = () => {
 
       <button
         onClick={handleGenerateReport}
-        className="mt-4 w-full bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
+        className="mt-4 w-full bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"
       >
         יצירת דוח
       </button>

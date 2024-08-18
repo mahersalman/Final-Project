@@ -33,11 +33,11 @@ const EmployeeItem = () => {
 
   const handleUpdateEmployee = async (updatedEmployee) => {
     try {
-      await axios.put(`http://localhost:5001/api/employees/${updatedEmployee._id}`, updatedEmployee);
+      await axios.put(`http://localhost:5001/api/employees/${updatedEmployee.person_id}`, updatedEmployee);
       setEmployees(employees.map(emp => 
-        emp._id === updatedEmployee._id ? updatedEmployee : emp
+        emp.person_id === updatedEmployee.person_id ? updatedEmployee : emp
       ));
-      if (selectedEmployee && selectedEmployee._id === updatedEmployee._id) {
+      if (selectedEmployee && selectedEmployee.person_id === updatedEmployee.person_id) {
         setSelectedEmployee(updatedEmployee);
       }
     } catch (error) {
