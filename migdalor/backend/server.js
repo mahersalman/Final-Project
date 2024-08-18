@@ -71,8 +71,6 @@ app.post('/api/employees', async (req, res) => {
       first_name: req.body.first_name,
       last_name: req.body.last_name,
       department: req.body.department,
-      phone: req.body.phone,
-      birth_date: new Date(req.body.birth_date),
       role: req.body.role || 'Employee'
     });
 

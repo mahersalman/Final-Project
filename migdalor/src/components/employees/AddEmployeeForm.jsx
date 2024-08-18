@@ -7,9 +7,7 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
   const [fname, setFName] = useState('');  
   const [lname, setLName] = useState('');
   const [department, setDepartment] = useState('');
-  const [phone, setPhone] = useState('');
   const [id, setId] = useState('');
-  const [bdate, setBdate] = useState('');
   const [stations, setStations] = useState([]); // State for selected stations
   const [stationAverages, setStationAverages] = useState({});
 
@@ -23,8 +21,6 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
         first_name: fname,
         last_name: lname,
         department,
-        phone,
-        birth_date: bdate,
         role: 'Employee',
       });
 
@@ -99,27 +95,7 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
             onChange={setStations}
             onAverageChange={setStationAverages}
           />
-          <div className="mb-4">
-            <label className="block mb-2">טלפון:</label>
-            <input
-              type="tel"
-              placeholder='052-1234-123'
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full border p-2 rounded"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-2">תאריך לידה:</label>
-            <input
-              type="date"
-              value={bdate}
-              onChange={(e) => setBdate(e.target.value)}
-              className="w-full border p-2 rounded"
-              required
-            />
-          </div>
+
           <div className="flex justify-between">
             <button
               type="button"
