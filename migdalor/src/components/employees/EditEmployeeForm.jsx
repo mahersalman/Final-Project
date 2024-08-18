@@ -47,19 +47,13 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
 
       // Update qualifications
       const qualificationPromises = Object.entries(stationAverages).map(([station, avg]) => 
-        axios.post('http://localhost:5001/api/qualifications', {
+        axios.put('http://localhost:5001/api/qualifications', {
           person_id: employee.person_id,
           station_name: station,
           avg: parseFloat(avg)
         })
       );
-      const qualificationResults = await Promise.all(qualificationPromises);
-
-      // Check if any qualification updates failed
-      const failedUpdates = qualificationResults.filter(result => result.status !== 200);
-      if (failedUpdates.length > 0) {
-        throw new Error(`Failed to update ${failedUpdates.length} qualifications`);
-      }
+      await Promise.all(qualificationPromises);
 
       setSuccessMessage('Employee data updated successfully');
       onUpdateEmployee({ ...employee, department, stations });
