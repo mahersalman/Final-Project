@@ -108,7 +108,7 @@ const EmployeeItem = () => {
           ייצא ל-Excel
         </button>
       </div>
-      
+
       {/* Spacer div for larger screens */}
       <div className="hidden lg:block lg:w-8"></div>
       
