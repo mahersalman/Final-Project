@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 const app = express();
-const port = process.env.PORT || 5001;
+const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
@@ -13,7 +13,8 @@ app.use(express.json());
 const userRouter = require('./routes/users');
 const Station = require('./models/station');
 const Person = require('./models/person');
-const Qualification = require('./models/qualification'); 
+const Qualification = require('./models/qualification');
+const Product = require('./models/product'); 
 
 const mongoURI = "mongodb+srv://admin:Aa112233@migdalor.uqujiwf.mongodb.net/migdalor?retryWrites=true&w=majority&appName=migdalor";
 console.log('Mongo URI:', mongoURI);
@@ -176,4 +177,18 @@ app.put('/api/employees/:employeeId', async (req, res) => {
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
+});
+
+// Get all products 
+app.get('/api/products', async (req, res) => {
+  try {
+    console.log('Attempting to fetch products...');
+    const products = await Product.find({}).select('product_name');
+    console.log('Fetched products:', products);
+    console.log('Number of products found:', products.length);
+    res.json(products);
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ message: 'Error fetching products', error: error.message });
+  }
 });

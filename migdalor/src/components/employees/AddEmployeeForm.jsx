@@ -18,7 +18,7 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
     e.preventDefault();
     try {
       // Save employee to person table
-      const employeeResponse = await axios.post('http://localhost:5001/api/employees', {
+      const employeeResponse = await axios.post('http://localhost:5000/api/employees', {
         person_id: id,
         first_name: fname,
         last_name: lname,
@@ -30,7 +30,7 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
 
       // Save qualifications to qualification table
       const qualificationPromises = Object.entries(stationAverages).map(([station, avg]) => 
-        axios.post('http://localhost:5001/api/qualifications', {
+        axios.post('http://localhost:5000/api/qualifications', {
           person_id: id,
           station_name: station,
           avg: parseFloat(avg)
