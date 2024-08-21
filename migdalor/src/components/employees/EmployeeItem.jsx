@@ -34,7 +34,6 @@ const EmployeeItem = () => {
   const handleUpdateEmployee = async (updatedEmployee) => {
     try {
       await axios.put(`http://localhost:5001/api/employees/${updatedEmployee.person_id}`, updatedEmployee);
-       main
       setEmployees(employees.map(emp => 
         emp.person_id === updatedEmployee.person_id ? updatedEmployee : emp
       ));

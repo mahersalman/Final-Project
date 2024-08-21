@@ -40,14 +40,12 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
     setSuccessMessage(null);
     try {
       await axios.put(`http://localhost:5001/api/employees/${employee.person_id}`, {
-         main
         department
       });
 
       const qualificationPromises = Object.entries(stationAverages).map(([station, avg]) => 
 
         axios.put('http://localhost:5001/api/qualifications', {
-        main
           person_id: employee.person_id,
           station_name: station,
           avg: parseFloat(avg)
