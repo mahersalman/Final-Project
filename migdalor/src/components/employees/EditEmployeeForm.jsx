@@ -33,38 +33,31 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
     fetchQualifications();
   }, [employee.person_id]);
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
     try {
-      // Update employee's department
-      await axios.put(`http://localhost:5000/api/employees/${employee.person_id}`, {
+      await axios.put(`http://localhost:5001/api/employees/${employee.person_id}`, {
+         main
         department
       });
 
-      // Update qualifications
       const qualificationPromises = Object.entries(stationAverages).map(([station, avg]) => 
-        axios.post('http://localhost:5000/api/qualifications', {
+
+        axios.put('http://localhost:5001/api/qualifications', {
+        main
           person_id: employee.person_id,
           station_name: station,
           avg: parseFloat(avg)
         })
       );
-      const qualificationResults = await Promise.all(qualificationPromises);
-
-      // Check if any qualification updates failed
-      const failedUpdates = qualificationResults.filter(result => result.status !== 200);
-      if (failedUpdates.length > 0) {
-        throw new Error(`Failed to update ${failedUpdates.length} qualifications`);
-      }
+      await Promise.all(qualificationPromises);
 
       setSuccessMessage('Employee data updated successfully');
       onUpdateEmployee({ ...employee, department, stations });
       
-      // Delay closing the form to show the success message
       setTimeout(() => {
         onClose();
       }, 1500);
@@ -76,46 +69,56 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
     }
   };
 
-  if (isLoading && !successMessage) return <div>Loading...</div>;
+  if (isLoading && !successMessage) return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+      <div className="bg-white p-6 rounded-lg">
+        <p className="text-xl">Loading...</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white w-2/5 p-6 rounded-lg relative">
-        <h2 className="text-2xl font-bold mb-4">עריכת פרטי עובד</h2>
-        {error && <div className="text-red-500 mb-4">{error}</div>}
-        {successMessage && <div className="text-green-500 mb-4">{successMessage}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label>בחירת מחלקה: </label>
-            <DepartmentDropdown
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="w-full p-2"
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+      <div className="bg-white w-full max-w-md rounded-lg shadow-lg flex flex-col max-h-[90vh]">
+        <h2 className="text-xl sm:text-2xl font-bold p-4 sm:p-6 pb-0">עריכת פרטי עובד</h2>
+        <div className="overflow-y-auto flex-grow p-4 sm:p-6 pt-4">
+          {error && <div className="text-red-500 mb-4">{error}</div>}
+          {successMessage && <div className="text-green-500 mb-4">{successMessage}</div>}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block mb-1 text-sm font-medium">בחירת מחלקה:</label>
+              <DepartmentDropdown
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="w-full p-2 text-sm"
+              />
+            </div>
+            <StationSelector
+              selectedStations={stations}
+              onChange={setStations}
+              onAverageChange={setStationAverages}
+              initialAverages={stationAverages}
             />
-          </div>
-          <StationSelector
-            selectedStations={stations}
-            onChange={setStations}
-            onAverageChange={setStationAverages}
-            initialAverages={stationAverages}
-          />
-          <div className="flex justify-between mt-4">
+          </form>
+        </div>
+        <div className="p-4 sm:p-6 pt-0 border-t">
+          <div className="flex justify-between">
             <button
               type="button"
               onClick={onClose}
-              className="mr-2 px-4 py-2 bg-gray-300 rounded"
+              className="px-4 py-2 bg-gray-300 rounded text-sm font-medium hover:bg-gray-400 transition-colors"
             >
               ביטול
             </button>
             <button
-              type="submit"
-              className="px-4 py-2 rounded bg-[#1F6231] border-none relative pointer hover:bg-[#309d49] text-white"
+              onClick={handleSubmit}
+              className="px-4 py-2 rounded bg-[#1F6231] text-white text-sm font-medium hover:bg-[#309d49] transition-colors"
               disabled={isLoading}
             >
               {isLoading ? 'מעדכן...' : 'עדכן פרטים'}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

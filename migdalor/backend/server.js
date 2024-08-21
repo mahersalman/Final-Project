@@ -72,8 +72,6 @@ app.post('/api/employees', async (req, res) => {
       first_name: req.body.first_name,
       last_name: req.body.last_name,
       department: req.body.department,
-      phone: req.body.phone,
-      birth_date: new Date(req.body.birth_date),
       role: req.body.role || 'Employee'
     });
 
@@ -104,7 +102,7 @@ app.post('/api/qualifications', async (req, res) => {
 });
 
 // Update or create employee qualifications
-app.post('/api/qualifications', async (req, res) => {
+app.put('/api/qualifications', async (req, res) => {
   try {
     const { person_id, station_name, avg } = req.body;
     console.log('Received qualification update request:', { person_id, station_name, avg });
@@ -115,29 +113,18 @@ app.post('/api/qualifications', async (req, res) => {
       return res.status(404).json({ message: 'Person not found' });
     }
 
-    // Check if a qualification already exists
-    let qualification = await Qualification.findOne({ person_id: person._id, station_name });
+    // Find and update the qualification, or create a new one if it doesn't exist
+    const qualification = await Qualification.findOneAndUpdate(
+      { person_id: person.person_id, station_name },
+      { avg },
+      { new: true, upsert: true }
+    );
 
-    if (qualification) {
-      // If qualification exists, update it
-      qualification.avg = avg;
-      await qualification.save();
-      console.log('Qualification updated:', qualification);
-    } else {
-      // If qualification doesn't exist, create a new one
-      qualification = new Qualification({
-        person_id: person._id,
-        station_name,
-        avg
-      });
-      await qualification.save();
-      console.log('New qualification created:', qualification);
-    }
-
+    console.log('Qualification updated:', qualification);
     res.json(qualification);
   } catch (error) {
-    console.error('Error updating/creating qualification:', error);
-    res.status(500).json({ message: 'Error updating/creating qualification', error: error.message });
+    console.error('Error updating qualification:', error);
+    res.status(500).json({ message: 'Error updating qualification', error: error.message });
   }
 });
 
