@@ -1,7 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const mqtt = require('mqtt');
+
 require('dotenv').config();
+
 const app = express();
 const port = process.env.PORT || 5001;
 
@@ -31,6 +34,26 @@ mongoose.connect(mongoURI, {
   }
 })
 .catch(err => console.log(err));
+
+// MQTT Client setup
+const mqttBroker = 'mqtt://test.mosquitto.org'; // Replace with MQTT broker address
+const mqttClient = mqtt.connect(mqttBroker);
+
+mqttClient.on('connect', () => {
+  console.log('Connected to MQTT broker');
+  
+  // Subscribe to topics
+  mqttClient.subscribe('Braude/Shluker/', (err) => {
+    if (!err) {
+      console.log('Subscribed to Braude/Shluker/');
+    }
+  });
+});
+
+mqttClient.on('message', (topic, message) => {
+  console.log(`Received message on topic ${topic}: ${message.toString()}`);
+  // Handle incoming messages here
+});
 
 // Define Routes
 app.use('/users', userRouter);
@@ -159,6 +182,75 @@ app.put('/api/employees/:employeeId', async (req, res) => {
     res.status(500).json({ message: 'Error updating employee', error: error.message });
   }
 });
+
+// route for dashboard data
+app.get('/api/dashboard-data', async (req, res) => {
+  try {
+    console.log('Received request for dashboard data');
+    const currentDate = new Date().toISOString().split('T')[0];
+    const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    console.log('Current date:', currentDate, 'Yesterday:', yesterdayDate);
+
+    // Calculate inactive and active workers
+    const totalWorkers = await Person.countDocuments();
+    console.log('Total workers:', totalWorkers);
+    
+    const activeWorkersToday = await Assignment.distinct('personID', { date: currentDate }).length;
+    console.log('Active workers today:', activeWorkersToday);
+    
+    const inactiveWorkers = totalWorkers - activeWorkersToday;
+    console.log('Inactive workers:', inactiveWorkers);
+
+    // Calculate new active workers
+    const activeWorkersYesterday = await Assignment.distinct('personID', { date: yesterdayDate }).length;
+    console.log('Active workers yesterday:', activeWorkersYesterday);
+    
+    const newActiveWorkers = Math.max(0, activeWorkersToday - activeWorkersYesterday);
+    console.log('New active workers:', newActiveWorkers);
+
+    // Calculate inactive stations
+    const totalStations = await Station.countDocuments();
+    console.log('Total stations:', totalStations);
+    
+    const activeStations = await Assignment.distinct('stationName', { date: currentDate }).length;
+    console.log('Active stations:', activeStations);
+    
+    const inactiveStations = totalStations - activeStations;
+    console.log('Inactive stations:', inactiveStations);
+
+    // TODO: Implement daily defects calculation when the requirement is defined
+
+    const responseData = {
+      inactiveWorkers,
+      activeWorkers: activeWorkersToday,
+      newActiveWorkers,
+      dailyDefects: 0, // Placeholder until requirement is defined
+      inactiveStations
+    };
+    
+    console.log('Sending response:', responseData);
+    res.json(responseData);
+  } catch (error) {
+    console.error('Error calculating dashboard data:', error);
+    // Ensure we're sending a JSON response even in case of an error
+    res.status(500).json({ 
+      message: 'Error calculating dashboard data', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    message: 'An unexpected error occurred',
+    error: err.message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
+
 
 // Start the server
 app.listen(port, () => {

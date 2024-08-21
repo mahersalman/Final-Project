@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement } from 'chart.js';
+import mqtt from 'mqtt';
 
 ChartJS.register(ArcElement);
 
@@ -11,19 +12,31 @@ function ShlokerCheck() {
   });
 
   useEffect(() => {
-    // Mock data source
-    const mockData = {
-      proper: 0,
-      improper: 0,
+    // MQTT client setup
+    const client = mqtt.connect('ws://broker.hivemq.com:8000/mqtt'); // Replace with your MQTT broker WebSocket URL
+    
+    client.on('connect', () => {
+      console.log('Connected to MQTT broker');
+      client.subscribe('shlocker/tests'); // Replace with your actual topic
+    });
+
+    client.on('message', (topic, message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        if (data.proper !== undefined && data.improper !== undefined) {
+          setCounterData(prevData => ({
+            proper: prevData.proper + data.proper,
+            improper: prevData.improper + data.improper,
+          }));
+        }
+      } catch (error) {
+        console.error('Error processing MQTT message:', error);
+      }
+    });
+
+    return () => {
+      client.end();
     };
-
-    const intervalId = setInterval(() => {
-      mockData.proper += Math.ceil(Math.random()) * 5;
-      mockData.improper += Math.ceil(Math.random());
-      setCounterData({ ...mockData });
-    }, 3000); // Update every 3 seconds
-
-    return () => clearInterval(intervalId);
   }, []);
 
   const chartData = {
@@ -37,25 +50,24 @@ function ShlokerCheck() {
   };
 
   return (
-   <div className="flex flex-col items-center">
-   <div className="flex w-11/12 justify-center gap-9">
-    <h1 className='text-4xl font-bold'>תוצרת יומית</h1>
-     <div className="flex items-center justify-center w-1/2 h-15 bg-green-100 p-4 rounded-lg m-5">
-       <h2 className="text-xl font-bold">רכיבים תקינים: {counterData.proper}</h2>
-     </div>
-     <div className="flex items-center justify-center w-1/2 bg-red-100 p-4 rounded-lg m-5">
-       <h2 className="text-xl font-bold">רכיבים פגומים: {counterData.improper}</h2>
-     </div>
-   </div>
-   <div className="w-60 h-60">
-     <Pie data={chartData} />
-   </div>
- </div>
+    <div className="flex flex-col items-center">
+      <div className="flex w-11/12 justify-center gap-9">
+        <h1 className='text-4xl font-bold'>תוצרת יומית</h1>
+        <div className="flex items-center justify-center w-1/2 h-15 bg-green-100 p-4 rounded-lg m-5">
+          <h2 className="text-xl font-bold">רכיבים תקינים: {counterData.proper}</h2>
+        </div>
+        <div className="flex items-center justify-center w-1/2 bg-red-100 p-4 rounded-lg m-5">
+          <h2 className="text-xl font-bold">רכיבים פגומים: {counterData.improper}</h2>
+        </div>
+      </div>
+      <div className="w-60 h-60">
+        <Pie data={chartData} />
+      </div>
+    </div>
   );
 }
 
 export default ShlokerCheck;
-
 
 // import React, { useState, useEffect } from 'react';
 // import { Pie } from 'react-chartjs-2';
