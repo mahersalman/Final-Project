@@ -16,15 +16,16 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
     e.preventDefault();
     try {
       const employeeResponse = await axios.post('http://localhost:5001/api/employees', {
+       main
         person_id: id,
         first_name: fname,
         last_name: lname,
         department,
         role: 'Employee',
       });
-
       const qualificationPromises = Object.entries(stationAverages).map(([station, avg]) =>
         axios.post('http://localhost:5001/api/qualifications', {
+        main
           person_id: id,
           station_name: station,
           avg: parseFloat(avg)

@@ -15,7 +15,7 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
     const fetchQualifications = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(`http://localhost:5001/api/qualifications/${employee.person_id}`);
+        const response = await axios.get(`http://localhost:5000/api/qualifications/${employee.person_id}`);
         const qualifications = response.data;
         setStations(qualifications.map(q => q.station_name));
         const averages = {};
@@ -40,11 +40,14 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
     setSuccessMessage(null);
     try {
       await axios.put(`http://localhost:5001/api/employees/${employee.person_id}`, {
+         main
         department
       });
 
       const qualificationPromises = Object.entries(stationAverages).map(([station, avg]) => 
+
         axios.put('http://localhost:5001/api/qualifications', {
+        main
           person_id: employee.person_id,
           station_name: station,
           avg: parseFloat(avg)

@@ -22,7 +22,7 @@ const EmployeeItem = () => {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:5001/api/employees');
+      const response = await axios.get('http://localhost:5000/api/employees');
       setEmployees(response.data);
       setIsLoading(false);
     } catch (err) {
@@ -34,6 +34,7 @@ const EmployeeItem = () => {
   const handleUpdateEmployee = async (updatedEmployee) => {
     try {
       await axios.put(`http://localhost:5001/api/employees/${updatedEmployee.person_id}`, updatedEmployee);
+       main
       setEmployees(employees.map(emp => 
         emp.person_id === updatedEmployee.person_id ? updatedEmployee : emp
       ));

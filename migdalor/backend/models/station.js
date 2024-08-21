@@ -4,7 +4,7 @@ const stationSchema = new mongoose.Schema({
   station_id: String,
   station_name: String,
   department: String,
-  details: String
+  product_name: String
 }, { collection: 'station' });
 
 module.exports = mongoose.model('Station', stationSchema);
