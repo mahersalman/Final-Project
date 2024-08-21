@@ -15,7 +15,7 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
     const fetchQualifications = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(`http://localhost:5000/api/qualifications/${employee.person_id}`);
+        const response = await axios.get(`http://localhost:5001/api/qualifications/${employee.person_id}`);
         const qualifications = response.data;
         setStations(qualifications.map(q => q.station_name));
         const averages = {};

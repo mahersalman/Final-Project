@@ -8,7 +8,7 @@ const StationSelector = ({ selectedStations, onChange, onAverageChange, initialA
   useEffect(() => {
     const fetchStations = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/stations');
+        const response = await axios.get('http://localhost:5001/api/stations');
         setStationOptions(response.data.map(station => station.station_name));
       } catch (error) {
         console.error('Error fetching stations:', error);

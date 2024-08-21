@@ -22,7 +22,7 @@ const EmployeeItem = () => {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:5000/api/employees');
+      const response = await axios.get('http://localhost:5001/api/employees');
       setEmployees(response.data);
       setIsLoading(false);
     } catch (err) {
