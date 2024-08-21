@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const ProductDropdown = ({ value, onChange, includeAllOption = false, className = '' }) => {
-  const [products, setProducts] = useState([]);
+const [products, setProducts] = useState([]);
 
-  useEffect(() => {
+useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/products');
-        if (!response.ok) {
-          throw new Error('Failed to fetch products');
-        }
-        const data = await response.json();
-        console.log('data: ',data);
-        setProducts(data);
+        const response = await axios.get('http://localhost:5000/api/products');
+        console.log('Response:', response);
+        setProducts(response.data);
       } catch (error) {
         console.error('Error fetching products:', error);
+        console.log('Error details:', error.response);
       }
     };
 
     fetchProducts();
-  }, []);
+}, []);
 
-  return (
+return (
     <select
       value={value}
       onChange={onChange}
@@ -29,8 +27,8 @@ const ProductDropdown = ({ value, onChange, includeAllOption = false, className 
     >
       {includeAllOption && <option value="all">כל המוצרים</option>}
       {products.map((product) => (
-        <option key={product} value={product}>
-          {product}
+        <option key={product._id} value={product.product_name}>
+          {product.product_name}
         </option>
       ))}
     </select>

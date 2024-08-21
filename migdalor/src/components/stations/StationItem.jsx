@@ -35,22 +35,6 @@ const StationItem = () =>{
         }
     };
 
-    useEffect(() => {
-        fetchProducts();
-    }, []);
-
-    const fetchProducts = async () => {
-        try {
-        setIsLoading(true);
-        const response = await axios.get('http://localhost:5000/api/products');
-        setStations(response.data);
-        setIsLoading(false);
-        } catch (err) {
-        setError('Failed to fetch products');
-        setIsLoading(false);
-        }
-    };
-
     const filteredStations = selectedDepartment === 'all'
     ? stations
     : stations.filter((station) => station.department === selectedDepartment);
