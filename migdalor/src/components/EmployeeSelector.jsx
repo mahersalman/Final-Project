@@ -56,14 +56,14 @@ const EmployeeSelector = ({ selectedEmployees, onChange, maxSelections }) => {
               <div className="flex items-center">
                 <input
                   type="checkbox"
-                  id={`employee-${employee._id}`}
+                  id={`${employee._id}`}
                   value={employee._id}
                   checked={selectedEmployees.includes(employee._id)}
                   onChange={() => handleCheckboxChange(employee._id)}
                   disabled={!selectedEmployees.includes(employee._id) && selectedEmployees.length >= maxSelections}
                   className="form-checkbox h-5 w-5 text-[#1F6231] rounded border-gray-300 focus:ring-[#1F6231] transition duration-150 ease-in-out"
                 />
-                <label htmlFor={`employee-${employee._id}`} className="ml-3 text-sm font-medium text-gray-700">
+                <label htmlFor={`${employee._id}`} className="ml-3 text-sm font-medium text-gray-700">
                   {`${employee.first_name} ${employee.last_name} - ${employee.role}`}
                 </label>
               </div>
