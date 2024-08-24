@@ -95,6 +95,7 @@ app.post('/api/employees', async (req, res) => {
       first_name: req.body.first_name,
       last_name: req.body.last_name,
       department: req.body.department,
+      status: req.body.status,
       role: req.body.role || 'Employee'
     });
 
@@ -169,14 +170,28 @@ app.get('/api/qualifications/:employeeId', async (req, res) => {
 // Update employee data
 app.put('/api/employees/:employeeId', async (req, res) => {
   try {
+    const { department, status } = req.body;
+    
+    // Prepare the update object
+    const updateObj = {};
+    if (department) updateObj.department = department;
+    if (status) updateObj.status = status;
+
     const updatedEmployee = await Person.findOneAndUpdate(
       { person_id: req.params.employeeId },
-      { $set: req.body },
+      { $set: updateObj },
       { new: true }
     );
+
     if (!updatedEmployee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
+
+    // If status has changed, log the change
+    if (status && updatedEmployee.status !== status) {
+      console.log(`Employee ${updatedEmployee.person_id} status changed from ${updatedEmployee.status} to ${status}`);
+    }
+
     res.json(updatedEmployee);
   } catch (error) {
     console.error('Error updating employee:', error);

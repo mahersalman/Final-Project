@@ -5,6 +5,7 @@ const personSchema = new mongoose.Schema({
   first_name: String,
   last_name: String,
   department: String,
+  status: String,
   role: String,
 }, { collection: 'person' });
 

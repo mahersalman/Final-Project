@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import DepartmentDropdown from '../DepartmentDropdown'
 import StationSelector from '../StationSelector';
+import StatusDropdown from './StatusDropdown';
 
 const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
   const [fname, setFName] = useState('');
   const [lname, setLName] = useState('');
   const [department, setDepartment] = useState('');
+  const [status, setStatus] = useState('');
   const [id, setId] = useState('');
   const [stations, setStations] = useState([]);
   const [stationAverages, setStationAverages] = useState({});
@@ -20,6 +22,7 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
         first_name: fname,
         last_name: lname,
         department,
+        status,
         role: 'Employee',
       });
       const qualificationPromises = Object.entries(stationAverages).map(([station, avg]) =>
@@ -34,7 +37,6 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
       onClose();
     } catch (error) {
       console.error('Error adding employee:', error);
-      // Handle error (e.g., show error message to user)
     }
   };
 
@@ -82,6 +84,14 @@ const AddEmployeeForm = ({ onClose, onAddEmployee }) => {
               <DepartmentDropdown
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
+                className="w-full p-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium">סטטוס עובד:</label>
+              <StatusDropdown
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
                 className="w-full p-2 text-sm"
               />
             </div>
