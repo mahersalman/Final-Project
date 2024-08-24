@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const mqtt = require('mqtt');
+const geneticAlgorithm = require('./GeneticAlgorithm.js');
 
 require('dotenv').config();
 
@@ -76,10 +77,10 @@ app.get('/api/stations', async (req, res) => {
 //get all employees
 app.get('/api/employees', async (req, res) => {
   try {
-    console.log('Attempting to fetch persons...');
+    console.log('Fetching employees...');
     const employees = await Person.find({});
-    console.log('Fetched persons:', employees);
-    console.log('Number of persons found:', employees.length);
+    console.log('Employees found:', employees.length);
+    console.log('Sample employee:', employees[0]);
     res.json(employees);
   } catch (error) {
     console.error('Error fetching employees:', error);
@@ -122,6 +123,20 @@ app.post('/api/qualifications', async (req, res) => {
   } catch (error) {
     console.error('Error saving qualification:', error);
     res.status(500).json({ message: 'Error saving qualification', error: error.message });
+  }
+});
+
+//get all qualifications
+app.get('/api/qualifications', async (req, res) => {
+  try {
+    console.log('Fetching qualifications...');
+    const qualifications = await Qualification.find({});
+    console.log('Qualifications found:', qualifications.length);
+    console.log('Sample qualification:', qualifications[0]);
+    res.json(qualifications);
+  } catch (error) {
+    console.error('Error fetching qualifications:', error);
+    res.status(500).json({ message: 'Error fetching qualifications', error: error.message });
   }
 });
 
@@ -284,5 +299,43 @@ app.get('/api/products', async (req, res) => {
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ message: 'Error fetching products', error: error.message });
+  }
+});
+
+app.post('/api/assign-employees', async (req, res) => {
+  try {
+    const { selectedStations, selectedEmployees } = req.body;
+    
+    // Fetch full employee data
+    const employees = await Person.find({ _id: { $in: selectedEmployees } });
+    
+    // Fetch full station data
+    const stations = await Station.find({ _id: { $in: selectedStations } });
+    
+    // Fetch qualifications for selected employees
+    const qualifications = await Qualification.find({ person_id: { $in: selectedEmployees } });
+    
+    // Run genetic algorithm
+    const bestAssignment = geneticAlgorithm(employees, stations, qualifications);
+    
+    // Create a detailed assignment object
+    const detailedAssignment = {};
+    Object.entries(bestAssignment).forEach(([stationId, employeeId]) => {
+      const station = stations.find(s => s.station_id === stationId);
+      const employee = employees.find(e => e._id.toString() === employeeId);
+      const qualification = qualifications.find(q => 
+        q.person_id === employeeId && q.station_name === station.station_name
+      );
+      detailedAssignment[employeeId] = {
+        stationId,
+        stationName: station.station_name,
+        qualificationScore: qualification ? qualification.avg : 0
+      };
+    });
+    
+    res.json(detailedAssignment);
+  } catch (error) {
+    console.error('Error assigning employees:', error);
+    res.status(500).json({ message: 'Error assigning employees', error: error.message });
   }
 });
