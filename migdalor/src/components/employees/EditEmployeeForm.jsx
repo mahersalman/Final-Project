@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DepartmentDropdown from '../DepartmentDropdown';
 import StationSelector from '../StationSelector';
+import StatusDropdown from './StatusDropdown';
 
 const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
   const [department, setDepartment] = useState(employee.department);
+  const [status, setStatus] = useState(employee.status || 'פעיל'); // Default to 'פעיל' if status is not set
   const [stations, setStations] = useState([]);
   const [stationAverages, setStationAverages] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -40,11 +42,11 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
     setSuccessMessage(null);
     try {
       await axios.put(`http://localhost:5001/api/employees/${employee.person_id}`, {
-        department
+        department,
+        status // Include status in the update
       });
 
       const qualificationPromises = Object.entries(stationAverages).map(([station, avg]) => 
-
         axios.put('http://localhost:5001/api/qualifications', {
           person_id: employee.person_id,
           station_name: station,
@@ -54,7 +56,7 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
       await Promise.all(qualificationPromises);
 
       setSuccessMessage('Employee data updated successfully');
-      onUpdateEmployee({ ...employee, department, stations });
+      onUpdateEmployee({ ...employee, department, stations, status }); // Include status in the updated employee object
       
       setTimeout(() => {
         onClose();
@@ -88,6 +90,14 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
               <DepartmentDropdown
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
+                className="w-full p-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium">סטטוס עובד:</label>
+              <StatusDropdown
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
                 className="w-full p-2 text-sm"
               />
             </div>

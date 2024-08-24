@@ -30,8 +30,7 @@ const EmployeeCard = ({ employee, onUpdateEmployee }) => {
       <h2 className="text-2xl font-bold mb-4">{`${employee.first_name} ${employee.last_name}`}</h2>
       <p className="text-gray-600 mb-2">תעודת זהות: {employee.person_id}</p>
       <p className="text-gray-600 mb-2">מחלקה: {employee.department}</p>
-      <p className="text-gray-600 mb-2">טלפון: {employee.phone}</p>
-      <p className="text-gray-600 mb-2">תאריך לידה: {new Date(employee.birth_date).toLocaleDateString()}</p>
+      <p className="text-gray-600 mb-2">סטטוס: {employee.status}</p>
       <button
         onClick={handleEditClick}
         className="my-4 bg-[#1F6231] border-none relative pointer hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
