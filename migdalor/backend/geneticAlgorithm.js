@@ -20,10 +20,13 @@ const generateInitialPopulation = (employees, stations, populationSize) => {
     let fitness = 0;
     Object.entries(assignment).forEach(([stationId, employeeId]) => {
       const station = stations.find(s => s.station_id === stationId);
+      const employee = employees.find(e => e.person_id === employeeId);
+
+      if(employee) {
       const employeeQualification = qualifications.find(q => 
         q.person_id === employeeId && q.station_name === station.station_name
       );
-      fitness += employeeQualification ? employeeQualification.avg : 0;
+      fitness += employeeQualification ? employeeQualification.avg : 0;}
     });
     return fitness;
   };

@@ -72,22 +72,22 @@ const StationItem = ({ onSelectStation }) => {
     }
 
     return (
-        <div className="bg-white shadow-md rounded-lg p-6 max-w-md mx-auto flex flex-col h-[700px]">
+        <div className="bg-white shadow-md rounded-lg p-4 sm:p-6 max-w-full sm:max-w-md mx-auto flex flex-col h-[500px] sm:h-[700px]">
             <div className="flex-none">
-                <h1 className="text-3xl font-bold mb-6 text-gray-800 text-center">עמדות</h1>
-                <div className="mb-6 bg-gray-100 p-4 rounded-md">
-                    <h2 className="text-lg font-semibold mb-3 flex items-center">
-                        <Filter className="mr-2" size={20} />
+                <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 text-center">עמדות</h1>
+                <div className="mb-4 sm:mb-6 bg-gray-100 p-3 sm:p-4 rounded-md">
+                    <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 flex items-center">
+                        <Filter className="mr-2" size={18} />
                         סינון
                     </h2>
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                         <div className="flex flex-col">
                             <label className="mb-1 text-sm font-medium text-gray-700">סינון לפי מחלקה</label>
                             <DepartmentDropdown
                                 value={selectedDepartment}
                                 onChange={handleDepartmentChange}
                                 includeAllOption={true}
-                                className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                             />
                         </div>
                         <div className="flex flex-col">
@@ -96,7 +96,7 @@ const StationItem = ({ onSelectStation }) => {
                                 value={selectedProduct}
                                 onChange={handleProductChange}
                                 includeAllOption={true}
-                                className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
                             />
                         </div>
                     </div>
@@ -109,14 +109,14 @@ const StationItem = ({ onSelectStation }) => {
                         <li
                             key={station._id}
                             onClick={() => handleStationClick(station)}
-                            className={`cursor-pointer p-3 rounded-md shadow transition duration-150 ease-in-out ${
+                            className={`cursor-pointer p-2 sm:p-3 rounded-md shadow transition duration-150 ease-in-out ${
                                 selectedStation && selectedStation._id === station._id
                                     ? 'bg-[#246B35] text-white'
                                     : 'bg-gray-50 hover:bg-gray-100'
                             }`}
                         >
-                            <div className="font-medium">{station.station_name}</div>
-                            <div className="text-sm text-gray-500 mt-1">
+                            <div className="font-medium text-sm sm:text-base">{station.station_name}</div>
+                            <div className="text-xs sm:text-sm text-gray-500 mt-1">
                                 {station.department} - {station.product_name}
                             </div>
                         </li>
@@ -124,7 +124,7 @@ const StationItem = ({ onSelectStation }) => {
                 </ul>
                 
                 {filteredStations.length === 0 && (
-                    <p className="text-center text-gray-500 mt-4">No stations found matching the current filters.</p>
+                    <p className="text-center text-gray-500 mt-4 text-sm sm:text-base">No stations found matching the current filters.</p>
                 )}
             </div>
         </div>

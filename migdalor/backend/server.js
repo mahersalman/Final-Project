@@ -267,12 +267,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-
-// Start the server
-app.listen(port, () => {
-  console.log(`Server is running on port: ${port}`);
-});
-
 // Get all products 
 app.get('/api/products', async (req, res) => {
   try {
@@ -324,3 +318,47 @@ app.post('/api/assign-employees', async (req, res) => {
     res.status(500).json({ message: 'Error assigning employees', error: error.message });
   }
 });
+
+app.get('/api/employees-with-qualifications/:stationName', async (req, res) => {
+  try {
+    const stationName = req.params.stationName;
+    console.log(`Fetching employees with qualifications for station: ${stationName}`);
+
+    // First, find all qualifications for the given station
+    const qualifications = await Qualification.find({ station_name: stationName });
+
+    // Extract person_ids from the qualifications
+    const personIds = qualifications.map(qual => qual.person_id);
+
+    // Now, fetch the corresponding persons
+    const employees = await Person.find({ person_id: { $in: personIds } });
+
+    console.log(`Found ${employees.length} qualified employees for station ${stationName}`);
+
+    // Combine employee data with their qualification
+    const employeesWithQualifications = employees.map(employee => {
+      const qualification = qualifications.find(q => q.person_id === employee.person_id);
+      return {
+        _id: employee._id,
+        person_id: employee.person_id,
+        first_name: employee.first_name,
+        last_name: employee.last_name,
+        department: employee.department,
+        role: employee.role,
+        qualification_avg: qualification ? qualification.avg : null
+      };
+    });
+
+    res.json(employeesWithQualifications);
+  } catch (error) {
+    console.error('Error fetching employees with qualifications:', error);
+    res.status(500).json({ message: 'Error fetching employees with qualifications', error: error.message });
+  }
+});
+
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running on port: ${port}`);
+});
+
