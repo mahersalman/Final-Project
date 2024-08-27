@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarIcon } from 'lucide-react';
-import AddAssignmentForm from './stations/AddAssignmentForm';
+import AddAssignmentForm from './AddAssignmentForm';
 
 const generateDummyData = (selectedDate, selectedStation) => {
   return [

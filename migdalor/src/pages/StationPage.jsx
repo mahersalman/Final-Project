@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import StationItem from '../components/stations/StationItem';
-import AssinmentComp from '../components/AssinmentComp';
+import AssinmentComp from '../components/stations/AssinmentComp';
 
 const StationPage = () => {
     const [selectedStation, setSelectedStation] = useState(null);
