@@ -43,18 +43,31 @@ const mqttClient = mqtt.connect(mqttBroker);
 
 mqttClient.on('connect', () => {
   console.log('Connected to MQTT broker');
-  
+
   // Subscribe to topics
-  mqttClient.subscribe('Braude/Shluker/', (err) => {
+  mqttClient.subscribe('Braude/Shluker/#', (err) => {
     if (!err) {
-      console.log('Subscribed to Braude/Shluker/');
+      console.log('Subscribed to Braude/Shluker/#');
     }
   });
 });
 
-mqttClient.on('message', (topic, message) => {
+mqttClient.on('message', async (topic, message) => {
   console.log(`Received message on topic ${topic}: ${message.toString()}`);
-  // Handle incoming messages here
+  
+  // Save the message to the mqttMsg collection
+  try {
+    const newMessage = {
+      topic: topic,
+      message: message.toString(),
+      timestamp: new Date()
+    };
+
+    await mongoose.connection.db.collection('mqttMsg').insertOne(newMessage);
+    console.log('Message saved to mqttMsg collection');
+  } catch (error) {
+    console.error('Error saving MQTT message to database:', error);
+  }
 });
 
 // Define Routes
