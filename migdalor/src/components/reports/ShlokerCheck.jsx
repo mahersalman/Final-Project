@@ -1,46 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement } from 'chart.js';
-import mqtt from 'mqtt';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import axios from 'axios';
 
-ChartJS.register(ArcElement);
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 function ShlokerCheck() {
   const [counterData, setCounterData] = useState({
     proper: 0,
     improper: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // MQTT client setup
-    const client = mqtt.connect('ws://broker.hivemq.com:8000/mqtt'); // Replace with your MQTT broker WebSocket URL
-    
-    client.on('connect', () => {
-      console.log('Connected to MQTT broker');
-      client.subscribe('shlocker/tests'); // Replace with your actual topic
-    });
-
-    client.on('message', (topic, message) => {
+    const fetchData = async () => {
       try {
-        const data = JSON.parse(message.toString());
-        if (data.proper !== undefined && data.improper !== undefined) {
-          setCounterData(prevData => ({
-            proper: prevData.proper + data.proper,
-            improper: prevData.improper + data.improper,
-          }));
-        }
+        setLoading(true);
+        const response = await axios.get('http://localhost:5001/api/shluker-results');
+        console.log('Received data:', response.data); // Add this line for debugging
+        setCounterData(response.data);
+        setError(null);
       } catch (error) {
-        console.error('Error processing MQTT message:', error);
+        console.error('Error fetching Shluker results:', error);
+        setError('Error fetching data. Please try again later.');
+      } finally {
+        setLoading(false);
       }
-    });
-
-    return () => {
-      client.end();
     };
+
+    fetchData(); // Fetch immediately when component mounts
+    const interval = setInterval(fetchData, 2 * 60 * 1000); // Fetch every 2 minutes
+
+    return () => clearInterval(interval);
   }, []);
 
   const chartData = {
-    labels: ['Proper', 'Improper'],
+    labels: ['תקין', 'פגום'],
     datasets: [
       {
         data: [counterData.proper, counterData.improper],
@@ -48,6 +44,14 @@ function ShlokerCheck() {
       },
     ],
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return (
     <div className="flex flex-col items-center">
@@ -68,61 +72,3 @@ function ShlokerCheck() {
 }
 
 export default ShlokerCheck;
-
-// import React, { useState, useEffect } from 'react';
-// import { Pie } from 'react-chartjs-2';
-// import { Chart as ChartJS, ArcElement } from 'chart.js';
-// import mqtt from 'mqtt'; // Replace 'mqtt' with your actual MQTT client library
-
-// ChartJS.register(ArcElement);
-
-// function CounterAndPieChart() {
-//   const [counterData, setCounterData] = useState({
-//     proper: 0,
-//     improper: 0,
-//   });
-
-//   useEffect(() => {
-//     // MQTT client setup (replace with your actual client)
-//     const client = mqtt.connect('your-mqtt-broker-url');
-
-//     const subscribe = () => {
-//       client.subscribe('your-mqtt-topic');
-//       client.on('message', (topic, message) => {
-//         const data = JSON.parse(message.toString());
-//         setCounterData({
-//           proper: data.proper,
-//           improper: data.improper,
-//         });
-//       });
-//     };
-
-//     subscribe();
-
-//     // Unsubscribe and disconnect client on component unmount
-//     return () => {
-//       client.unsubscribe('your-mqtt-topic');
-//       client.end();
-//     };
-//   }, []);
-
-//   const chartData = {
-//     labels: ['Proper', 'Improper'],
-//     datasets: [
-//       {
-//         data: [counterData.proper, counterData.improper],
-//         backgroundColor: ['green', 'red'],
-//       },
-//     ],
-//   };
-
-//   return (
-//     <div>
-//       <h2>Proper Items: {counterData.proper}</h2>
-//       <h2>Improper Items: {counterData.improper}</h2>
-//       <Pie data={chartData} />
-//     </div>
-//   );
-// }
-
-// export default CounterAndPieChart;
