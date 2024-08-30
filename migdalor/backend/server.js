@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const mqtt = require('mqtt');
+const moment = require('moment');
 const geneticAlgorithm = require('./GeneticAlgorithm.js');
 
 require('dotenv').config();
@@ -384,7 +385,41 @@ app.get('/api/employees-with-qualifications/:stationName', async (req, res) => {
   }
 });
 
+// New route to get Shluker results
+app.get('/api/shluker-results', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
+    const messages = await mongoose.connection.db.collection('mqttMsg').find({
+      timestamp: { $gte: today }
+    }).toArray();
+
+    const counterData = {
+      proper: 0,
+      improper: 0
+    };
+
+    messages.forEach(msg => {
+      try {
+        const parsedMessage = JSON.parse(msg.message);
+        if (parsedMessage['Shluker Result'] === 'Good Valve') {
+          counterData.proper++;
+        } else if (parsedMessage['Shluker Result'] === 'Invalid Valve') {
+          counterData.improper++;
+        }
+      } catch (parseError) {
+        console.error('Error parsing message:', parseError);
+      }
+    });
+
+    console.log('Shluker results:', counterData);
+    res.json(counterData);
+  } catch (error) {
+    console.error('Error fetching Shluker results:', error);
+    res.status(500).json({ message: 'Error fetching Shluker results', error: error.message });
+  }
+});
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
