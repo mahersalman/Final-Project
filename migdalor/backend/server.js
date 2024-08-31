@@ -20,6 +20,8 @@ const Station = require('./models/station');
 const Person = require('./models/person');
 const Qualification = require('./models/qualification');
 const Product = require('./models/product'); 
+const WorkingStation = require('./models/workingStation');
+
 
 const mongoURI = "mongodb+srv://admin:Aa112233@migdalor.uqujiwf.mongodb.net/migdalor?retryWrites=true&w=majority&appName=migdalor";
 console.log('Mongo URI:', mongoURI);
@@ -420,6 +422,141 @@ app.get('/api/shluker-results', async (req, res) => {
     res.status(500).json({ message: 'Error fetching Shluker results', error: error.message });
   }
 });
+
+// New route to get working station for station
+app.get('/api/workstations/:stationName', async (req, res) => {
+  try {
+    const { stationName } = req.params;
+    console.log(`Fetching workstations for station: ${stationName}`);
+
+    const station = await Station.findOne({ station_name: stationName });
+    if (!station) {
+      return res.status(404).json({ message: 'Station not found' });
+    }
+
+    const workstations = await WorkingStation.find({ station_name: stationName });
+    console.log(`Found ${workstations.length} workstations for station ${stationName}`);
+
+    res.json(workstations);
+  } catch (error) {
+    console.error('Error fetching workstations:', error);
+    res.status(500).json({ message: 'Error fetching workstations', error: error.message });
+  }
+});
+
+//route for generate reports
+app.get('/api/report', async (req, res) => {
+  const { station, workstations, date, employee } = req.query;
+  
+  try {
+    let reportData;
+    if (station && !workstations && !date && !employee) {
+      reportData = await generateMonthlyProductionReport(station);
+    } else if (station && workstations && !date && !employee) {
+      reportData = await generateWorkstationReport(station, workstations.split(','));
+    } else if (station && date) {
+      reportData = await generateDailyReport(station, workstations ? workstations.split(',') : null, date, employee);
+    } else {
+      return res.status(400).json({ error: 'Invalid combination of parameters' });
+    }
+    
+    res.json(reportData);
+  } catch (error) {
+    console.error('Error generating report:', error);
+    res.status(500).json({ error: 'Error generating report' });
+  }
+});
+
+async function generateMonthlyProductionReport(station) {
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  
+  const result = await mongoose.connection.db.collection('mqttMsg').aggregate([
+    {
+      $match: {
+        topic: { $regex: `^Braude/Shluker/${station}/` },
+        timestamp: { $gte: oneMonthAgo },
+        'message.Shluker Result': 'Good Valve'
+      }
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
+        totalProduction: { $sum: 1 }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]).toArray();
+  
+  return result;
+}
+
+async function generateWorkstationReport(station, workstations) {
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  
+  const result = await Promise.all(workstations.map(async (workstation) => {
+    const letter = workstation.match(/\d+/) ? String.fromCharCode(64 + parseInt(workstation.match(/\d+/)[0])) : '';
+    const topicRegex = new RegExp(`^Braude/Shluker/${station}/${letter}`);
+    
+    const data = await mongoose.connection.db.collection('mqttMsg').aggregate([
+      {
+        $match: {
+          topic: { $regex: topicRegex },
+          timestamp: { $gte: oneMonthAgo },
+          'message.Shluker Result': 'Good Valve'
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
+          production: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]).toArray();
+    
+    return { workstation, data };
+  }));
+  
+  return result;
+}
+
+async function generateDailyReport(station, workstations, date, employee) {
+  const startDate = new Date(date);
+  const endDate = new Date(date);
+  endDate.setDate(endDate.getDate() + 1);
+  
+  let matchQuery = {
+    topic: { $regex: `^Braude/Shluker/${station}/` },
+    timestamp: { $gte: startDate, $lt: endDate }
+  };
+  
+  if (employee) {
+    matchQuery['message.Person ID'] = employee;
+  }
+  
+  if (workstations) {
+    const letterRegex = workstations.map(ws => {
+      const letter = ws.match(/\d+/) ? String.fromCharCode(64 + parseInt(ws.match(/\d+/)[0])) : '';
+      return letter;
+    }).join('|');
+    matchQuery.topic.$regex = new RegExp(`^Braude/Shluker/${station}/[${letterRegex}]`);
+  }
+  
+  const result = await mongoose.connection.db.collection('mqttMsg').aggregate([
+    { $match: matchQuery },
+    {
+      $group: {
+        _id: "$message.Shluker Result",
+        count: { $sum: 1 }
+      }
+    }
+  ]).toArray();
+  
+  return result;
+}
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server is running on port: ${port}`);
