@@ -2,13 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { CalendarIcon } from 'lucide-react';
 import AddAssignmentForm from './AddAssignmentForm';
 
-const generateDummyData = (selectedDate, selectedStation) => {
-  return [
-    { id: 1, fullName: 'ישראל ישראלי', assignment1: 'עמדה 1', assignment2: 'עמדה 2' },
-    { id: 2, fullName: 'שרה כהן', assignment1: 'עמדה 3', assignment2: 'עמדה 4' },
-  ];
-};
-
 const DatePicker = ({ selectedDate, onDateChange }) => {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-white border border-gray-300 rounded-md p-2 shadow-sm hover:border-blue-500 transition-colors duration-200">
@@ -32,9 +25,10 @@ const AssignmentComp = ({ selectedStation }) => {
   const [data, setData] = useState([]);
   const [showForm, setShowForm] = useState(false);
 
-  useEffect(() => {
-    setData(generateDummyData(selectedDate, selectedStation));
-  }, [selectedDate, selectedStation]);
+  const handleAssignmentSubmit = (newAssignments) => {
+    setData(newAssignments);
+    setShowForm(false);
+  };
 
   return (
     <div className="p-4 sm:p-6 bg-gray-50 rounded-lg shadow-md relative">
@@ -64,8 +58,8 @@ const AssignmentComp = ({ selectedStation }) => {
               </tr>
             </thead>
             <tbody>
-              {data.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
+              {data.map((item, index) => (
+                <tr key={index} className="hover:bg-gray-50">
                   <td className="border border-gray-300 p-2 text-right">{item.fullName}</td>
                   <td className="border border-gray-300 p-2 text-right">{item.assignment1}</td>
                   <td className="border border-gray-300 p-2 text-right">{item.assignment2}</td>
@@ -78,6 +72,7 @@ const AssignmentComp = ({ selectedStation }) => {
       {showForm && (
         <AddAssignmentForm
           onClose={() => setShowForm(false)}
+          onSubmit={handleAssignmentSubmit}
           selectedStation={selectedStation}
           selectedDate={selectedDate}
         />

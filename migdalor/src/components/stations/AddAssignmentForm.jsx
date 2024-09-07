@@ -1,21 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import EmployeeSelector from '../EmployeeSelector';
 
-const AddAssignmentForm = ({ onClose, selectedStation, selectedDate }) => {
+const AddAssignmentForm = ({ onClose, onSubmit, selectedStation, selectedDate }) => {
   const [employeeCount, setEmployeeCount] = useState(1);
   const [selectedEmployees, setSelectedEmployees] = useState([]);
 
+  useEffect(() => {
+    // console.log('AddAssignmentForm - Current employeeCount:', employeeCount);
+    // console.log('AddAssignmentForm - Current selectedEmployees:', selectedEmployees);
+  }, [employeeCount, selectedEmployees]);
+
   const handleEmployeeCountChange = (e) => {
     const count = parseInt(e.target.value);
+    // console.log('AddAssignmentForm - New employee count selected:', count);
     setEmployeeCount(count);
-    setSelectedEmployees(prev => prev.slice(0, count));
+    setSelectedEmployees(prev => {
+      const updated = prev.slice(0, count);
+      // console.log('AddAssignmentForm - Updated selectedEmployees after count change:', updated);
+      return updated;
+    });
+  };
+
+  const handleEmployeeSelection = (updatedEmployees) => {
+    // console.log('AddAssignmentForm - Received updated employees:', updatedEmployees);
+    setSelectedEmployees(updatedEmployees);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Selected Station:", selectedStation);
-    console.log("Selected Date:", selectedDate);
-    console.log("Selected Employees:", selectedEmployees);
+    // console.log('AddAssignmentForm - Form submitted');
+    // console.log('AddAssignmentForm - Final employeeCount:', employeeCount);
+    // console.log('AddAssignmentForm - Final selectedEmployees:', selectedEmployees);
+    const assignments = selectedEmployees.map(employee => ({
+      fullName: `${employee._doc.first_name} ${employee._doc.last_name}`,
+      assignment1: selectedStation.station_name,
+      assignment2: ''
+    }));
+    onSubmit(assignments);
     onClose();
   };
 
@@ -45,7 +66,7 @@ const AddAssignmentForm = ({ onClose, selectedStation, selectedDate }) => {
           </div>
           <EmployeeSelector
             selectedEmployees={selectedEmployees}
-            onChange={setSelectedEmployees}
+            onChange={handleEmployeeSelection}
             maxSelections={employeeCount}
             selectedStation={selectedStation}
           />
