@@ -7,7 +7,7 @@ const EmployeeSelector = ({ selectedEmployees, onChange, maxSelections, selected
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('EmployeeSelector - selectedEmployees:', selectedEmployees);
+    // console.log('EmployeeSelector - selectedEmployees:', selectedEmployees);
   }, [maxSelections, selectedEmployees]);
 
   useEffect(() => {
