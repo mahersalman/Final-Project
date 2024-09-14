@@ -2,8 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const mqtt = require('mqtt');
-const moment = require('moment');
 const geneticAlgorithm = require('./GeneticAlgorithm.js');
+const { getTopEmployeesForStation } = require('./GeneticAlgorithm');
+const { getAllSortedEmployeesForStation } = require('./GeneticAlgorithm');
 
 require('dotenv').config();
 
@@ -325,8 +326,7 @@ app.post('/api/assign-employees', async (req, res) => {
     // Fetch qualifications for selected employees
     const qualifications = await Qualification.find({ person_id: { $in: selectedEmployees } });
     
-    // Run genetic algorithm
-    const bestAssignment = geneticAlgorithm(employees, stations, qualifications);
+
     
     // Create a detailed assignment object
     const detailedAssignment = {};
@@ -349,6 +349,44 @@ app.post('/api/assign-employees', async (req, res) => {
     res.status(500).json({ message: 'Error assigning employees', error: error.message });
   }
 });
+
+
+app.get('/api/top-employees/:stationName/:count', async (req, res) => {
+  try {
+    const { stationName, count } = req.params;
+    const station = await Station.findOne({ station_name: stationName });
+    const employees = await Person.find({});
+    const qualifications = await Qualification.find({ station_name: stationName });
+
+    const topEmployees = getTopEmployeesForStation(employees, station, qualifications, parseInt(count));
+
+    res.json(topEmployees);
+  } catch (error) {
+    console.error('Error fetching top employees:', error);
+    res.status(500).json({ message: 'Error fetching top employees', error: error.message });
+  }
+});
+
+app.get('/api/sorted-employees/:stationName', async (req, res) => {
+  try {
+    const { stationName } = req.params;
+    const station = await Station.findOne({ station_name: stationName });
+    if (!station) {
+      return res.status(404).json({ message: 'Station not found' });
+    }
+
+    const employees = await Person.find({});
+    const qualifications = await Qualification.find({ station_name: stationName });
+
+    const sortedEmployees = getAllSortedEmployeesForStation(employees, station, qualifications);
+
+    res.json(sortedEmployees);
+  } catch (error) {
+    console.error('Error fetching sorted employees:', error);
+    res.status(500).json({ message: 'Error fetching sorted employees', error: error.message });
+  }
+});
+
 
 app.get('/api/employees-with-qualifications/:stationName', async (req, res) => {
   try {

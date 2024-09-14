@@ -85,5 +85,40 @@ const generateInitialPopulation = (employees, stations, populationSize) => {
     const bestAssignmentIndex = fitnesses.indexOf(Math.max(...fitnesses));
     return population[bestAssignmentIndex];
   };
-  
-  module.exports = geneticAlgorithm;
+
+  // function to get top N employees for a station
+const getTopEmployeesForStation = (employees, station, qualifications, n) => {
+  const stationQualifications = qualifications.filter(q => q.station_name === station.station_name);
+  const employeesWithQualifications = employees.map(employee => {
+    const qualification = stationQualifications.find(q => q.person_id === employee.person_id);
+    return {
+      ...employee,
+      qualification: qualification ? qualification.avg : 0
+    };
+  });
+
+  return employeesWithQualifications
+    .sort((a, b) => b.qualification - a.qualification)
+    .slice(0, n);
+};
+
+
+
+const getAllSortedEmployeesForStation = (employees, station, qualifications) => {
+  const stationQualifications = qualifications.filter(q => q.station_name === station.station_name);
+  const employeesWithQualifications = employees.map(employee => {
+    const qualification = stationQualifications.find(q => q.person_id === employee.person_id);
+    return {
+      ...employee,
+      qualification: qualification ? qualification.avg : 0
+    };
+  });
+
+  // Filter out employees with no qualification for this station
+  const eligibleEmployees = employeesWithQualifications.filter(employee => employee.qualification > 0);
+
+  // Sort eligible employees by qualification in descending order
+  return eligibleEmployees.sort((a, b) => b.qualification - a.qualification);
+};
+
+module.exports = { geneticAlgorithm, getAllSortedEmployeesForStation };

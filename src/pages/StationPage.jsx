@@ -5,9 +5,14 @@ import AssinmentComp from '../components/stations/AssinmentComp';
 
 const StationPage = () => {
     const [selectedStation, setSelectedStation] = useState(null);
+    const [showAssignmentForm, setShowAssignmentForm] = useState(false);
 
     const handleStationSelect = (station) => {
         setSelectedStation(station);
+    };
+
+    const handleAssignmentButtonClick = () => {
+        setShowAssignmentForm(true);
     };
 
     return (
@@ -29,7 +34,10 @@ const StationPage = () => {
                         overflowY: 'auto',
                     }}
                 >
-                    <StationItem onSelectStation={handleStationSelect} />
+                    <StationItem 
+                        onSelectStation={handleStationSelect} 
+                        onAssignmentButtonClick={handleAssignmentButtonClick}
+                    />
                 </div>
                 <div
                     style={{
@@ -39,7 +47,11 @@ const StationPage = () => {
                         overflowY: 'auto',
                     }}
                 >
-                    <AssinmentComp selectedStation={selectedStation} />
+                    <AssinmentComp 
+                        selectedStation={selectedStation} 
+                        showForm={showAssignmentForm}
+                        onCloseForm={() => setShowAssignmentForm(false)}
+                    />
                 </div>
             </div>
         </div>
