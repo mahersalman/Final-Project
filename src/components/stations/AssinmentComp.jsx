@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CalendarIcon } from 'lucide-react';
+import axios from 'axios';
 import AddAssignmentForm from './AddAssignmentForm';
 
 const DatePicker = ({ selectedDate, onDateChange }) => {
@@ -22,12 +23,33 @@ const DatePicker = ({ selectedDate, onDateChange }) => {
 
 const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [data, setData] = useState([]);
+    const [employees, setEmployees] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchEmployees();
+    }, []);
+
+    const fetchEmployees = async () => {
+        try {
+            setIsLoading(true);
+            const response = await axios.get('http://localhost:5001/api/employees');
+            setEmployees(response.data);
+            setIsLoading(false);
+        } catch (err) {
+            setError('Failed to fetch employees');
+            setIsLoading(false);
+        }
+    };
 
     const handleAssignmentSubmit = (newAssignments) => {
-        setData(newAssignments);
+        // Handle new assignments if needed
         onCloseForm();
     };
+
+    if (isLoading) return <div>טוען...</div>;
+    if (error) return <div>{error}</div>;
 
     return (
         <div className="p-4 sm:p-6 bg-gray-50 rounded-lg shadow-md">
@@ -39,7 +61,6 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
             <div className="mt-4 sm:mt-6 bg-white border border-gray-200 rounded-lg p-4">
                 <h2 className="font-bold mb-4 text-lg sm:text-xl text-gray-700">
                     שיבוץ ליום {new Date(selectedDate).toLocaleDateString('he-IL')}
-                    {selectedStation && ` - ${selectedStation.station_name}`}
                 </h2>
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
@@ -51,11 +72,11 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {data.map((item, index) => (
+                            {employees.map((employee, index) => (
                                 <tr key={index} className="hover:bg-gray-50">
-                                    <td className="border border-gray-300 p-2 text-right">{item.fullName}</td>
-                                    <td className="border border-gray-300 p-2 text-right">{item.assignment1}</td>
-                                    <td className="border border-gray-300 p-2 text-right">{item.assignment2}</td>
+                                    <td className="border border-gray-300 p-2 text-right">{`${employee.first_name} ${employee.last_name}`}</td>
+                                    <td className="border border-gray-300 p-2 text-right"></td>
+                                    <td className="border border-gray-300 p-2 text-right"></td>
                                 </tr>
                             ))}
                         </tbody>
