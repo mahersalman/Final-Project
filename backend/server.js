@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const mqtt = require('mqtt');
+const path = require('path');
+
 const geneticAlgorithm = require('./GeneticAlgorithm.js');
 const { getTopEmployeesForStation } = require('./GeneticAlgorithm');
 const { getAllSortedEmployeesForStation } = require('./GeneticAlgorithm');
@@ -22,6 +24,7 @@ const Person = require('./models/person');
 const Qualification = require('./models/qualification');
 const Product = require('./models/product'); 
 const WorkingStation = require('./models/workingStation');
+const Assignment = require('./models/assignment');
 
 
 const mongoURI = "mongodb+srv://admin:Aa112233@migdalor.uqujiwf.mongodb.net/migdalor?retryWrites=true&w=majority&appName=migdalor";
@@ -184,8 +187,6 @@ app.put('/api/qualifications', async (req, res) => {
   }
 });
 
-
-
 // Get employee qualifications
 app.get('/api/qualifications/:employeeId', async (req, res) => {
   try {
@@ -235,54 +236,50 @@ app.put('/api/employees/:employeeId', async (req, res) => {
 app.get('/api/dashboard-data', async (req, res) => {
   try {
     console.log('Received request for dashboard data');
-    const currentDate = new Date().toISOString().split('T')[0];
-    const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    console.log('Current date:', currentDate, 'Yesterday:', yesterdayDate);
 
-    // Calculate inactive and active workers
+    // Calculate active workers (status === 'פעיל')
+    const activeWorkers = await Person.countDocuments({ status: 'פעיל' });
+    console.log('Active workers:', activeWorkers);
+
+    // Calculate total workers and inactive workers
     const totalWorkers = await Person.countDocuments();
-    console.log('Total workers:', totalWorkers);
-    
-    const activeWorkersToday = await Assignment.distinct('personID', { date: currentDate }).length;
-    console.log('Active workers today:', activeWorkersToday);
-    
-    const inactiveWorkers = totalWorkers - activeWorkersToday;
+    const inactiveWorkers = totalWorkers - activeWorkers;
     console.log('Inactive workers:', inactiveWorkers);
 
-    // Calculate new active workers
-    const activeWorkersYesterday = await Assignment.distinct('personID', { date: yesterdayDate }).length;
-    console.log('Active workers yesterday:', activeWorkersYesterday);
-    
-    const newActiveWorkers = Math.max(0, activeWorkersToday - activeWorkersYesterday);
-    console.log('New active workers:', newActiveWorkers);
-
-    // Calculate inactive stations
+    // Calculate stations
     const totalStations = await Station.countDocuments();
     console.log('Total stations:', totalStations);
-    
-    const activeStations = await Assignment.distinct('stationName', { date: currentDate }).length;
-    console.log('Active stations:', activeStations);
-    
-    const inactiveStations = totalStations - activeStations;
-    console.log('Inactive stations:', inactiveStations);
 
-    // TODO: Implement daily defects calculation when the requirement is defined
+    // For active and inactive stations, we'll keep the previous logic
+    // Assuming a station is active if it has an assignment today
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    const startOfDay = new Date(currentDate);
+    const endOfDay = new Date(currentDate);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+
+    const activeStations = await Assignment.distinct('workingStation_name', {
+      date: {
+        $gte: startOfDay,
+        $lt: endOfDay
+      }
+    });
+    const activeStationsCount = activeStations.length;
+    const inactiveStations = totalStations - activeStationsCount;
 
     const responseData = {
       inactiveWorkers,
-      activeWorkers: activeWorkersToday,
-      newActiveWorkers,
-      dailyDefects: 0, // Placeholder until requirement is defined
+      activeWorkers,
+      dailyDefects: 0, // Placeholder as before
       inactiveStations
     };
-    
+
     console.log('Sending response:', responseData);
     res.json(responseData);
   } catch (error) {
     console.error('Error calculating dashboard data:', error);
-    // Ensure we're sending a JSON response even in case of an error
-    res.status(500).json({ 
-      message: 'Error calculating dashboard data', 
+    res.status(500).json({
+      message: 'Error calculating dashboard data',
       error: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
@@ -393,7 +390,7 @@ app.get('/api/employees-with-qualifications/:stationName', async (req, res) => {
     const stationName = req.params.stationName;
     console.log(`Fetching employees with qualifications for station: ${stationName}`);
 
-    // First, find all qualifications for the given station
+    // find all qualifications for the given station
     const qualifications = await Qualification.find({ station_name: stationName });
 
     // Extract person_ids from the qualifications
@@ -425,7 +422,7 @@ app.get('/api/employees-with-qualifications/:stationName', async (req, res) => {
   }
 });
 
-// New route to get Shluker results
+//route to get Shluker results
 app.get('/api/shluker-results', async (req, res) => {
   try {
     const today = new Date();
@@ -529,13 +526,13 @@ async function generateMonthlyProductionReport(station) {
   return result;
 }
 
-async function generateWorkstationReport(station, workstations) {
+async function generateWorkstationReport(workstations) {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
   
   const result = await Promise.all(workstations.map(async (workstation) => {
     const letter = workstation.match(/\d+/) ? String.fromCharCode(64 + parseInt(workstation.match(/\d+/)[0])) : '';
-    const topicRegex = new RegExp(`^Braude/Shluker/${station}/${letter}`);
+    const topicRegex = new RegExp(`^Braude/Shluker/${letter}`);
     
     const data = await mongoose.connection.db.collection('mqttMsg').aggregate([
       {
