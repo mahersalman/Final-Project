@@ -4,26 +4,27 @@ import axios from 'axios';
 import AddAssignmentForm from './AddAssignmentForm';
 
 const DatePicker = ({ selectedDate, onDateChange }) => {
-  return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-white border border-gray-300 rounded-md p-2 shadow-sm hover:border-blue-500 transition-colors duration-200">
-      <div className="flex items-center gap-2">
-        <CalendarIcon className="text-gray-400" size={20} />
-        <label htmlFor="datePicker" className="text-gray-700 font-medium">בחר תאריך:</label>
-      </div>
-      <input
-        id="datePicker"
-        type="date"
-        value={selectedDate}
-        onChange={(e) => onDateChange(e.target.value)}
-        className="outline-none border-none bg-transparent text-gray-800 font-semibold w-full sm:w-auto"
-      />
-    </div>
-  );
+    return (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-white border border-gray-300 rounded-md p-2 shadow-sm hover:border-blue-500 transition-colors duration-200">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="text-gray-400" size={20} />
+            <label htmlFor="datePicker" className="text-gray-700 font-medium">בחר תאריך:</label>
+          </div>
+          <input
+            id="datePicker"
+            type="date"
+            value={selectedDate}
+            onChange={(e) => onDateChange(e.target.value)}
+            className="outline-none border-none bg-transparent text-gray-800 font-semibold w-full sm:w-auto"
+          />
+        </div>
+      );
 };
 
 const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [employees, setEmployees] = useState([]);
+    const [assignments, setAssignments] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -44,7 +45,30 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     };
 
     const handleAssignmentSubmit = (newAssignments) => {
-        // Handle new assignments if needed
+        setAssignments(prevAssignments => {
+            const updatedAssignments = { ...prevAssignments };
+            if (!updatedAssignments[selectedDate]) {
+                updatedAssignments[selectedDate] = [];
+            }
+            
+            newAssignments.forEach(newAssignment => {
+                const existingIndex = updatedAssignments[selectedDate].findIndex(
+                    a => a.fullName === newAssignment.fullName
+                );
+                if (existingIndex !== -1) {
+                    // Update existing assignment
+                    updatedAssignments[selectedDate][existingIndex] = {
+                        ...updatedAssignments[selectedDate][existingIndex],
+                        ...newAssignment
+                    };
+                } else {
+                    // Add new assignment
+                    updatedAssignments[selectedDate].push(newAssignment);
+                }
+            });
+            
+            return updatedAssignments;
+        });
         onCloseForm();
     };
 
@@ -72,13 +96,17 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {employees.map((employee, index) => (
-                                <tr key={index} className="hover:bg-gray-50">
-                                    <td className="border border-gray-300 p-2 text-right">{`${employee.first_name} ${employee.last_name}`}</td>
-                                    <td className="border border-gray-300 p-2 text-right"></td>
-                                    <td className="border border-gray-300 p-2 text-right"></td>
-                                </tr>
-                            ))}
+                            {employees.map((employee, index) => {
+                                const fullName = `${employee.first_name} ${employee.last_name}`;
+                                const assignment = assignments[selectedDate]?.find(a => a.fullName === fullName);
+                                return (
+                                    <tr key={index} className="hover:bg-gray-50">
+                                        <td className="border border-gray-300 p-2 text-right">{fullName}</td>
+                                        <td className="border border-gray-300 p-2 text-right">{assignment?.assignment1 || ''}</td>
+                                        <td className="border border-gray-300 p-2 text-right">{assignment?.assignment2 || ''}</td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
