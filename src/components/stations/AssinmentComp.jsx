@@ -3,6 +3,13 @@ import { CalendarIcon } from 'lucide-react';
 import axios from 'axios';
 import AddAssignmentForm from './AddAssignmentForm';
 
+// Simple Alert component
+const Alert = ({ children }) => (
+  <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+    {children}
+  </div>
+);
+
 const DatePicker = ({ selectedDate, onDateChange }) => {
     return (
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-white border border-gray-300 rounded-md p-2 shadow-sm hover:border-blue-500 transition-colors duration-200">
@@ -18,7 +25,7 @@ const DatePicker = ({ selectedDate, onDateChange }) => {
             className="outline-none border-none bg-transparent text-gray-800 font-semibold w-full sm:w-auto"
           />
         </div>
-      );
+    );
 };
 
 const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
@@ -27,6 +34,8 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     const [assignments, setAssignments] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [assignmentMessage, setAssignmentMessage] = useState('');
+
 
     useEffect(() => {
         fetchEmployees();
@@ -51,22 +60,28 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                 updatedAssignments[selectedDate] = [];
             }
             
+            let message = '';
+
             newAssignments.forEach(newAssignment => {
                 const existingIndex = updatedAssignments[selectedDate].findIndex(
                     a => a.fullName === newAssignment.fullName
                 );
                 if (existingIndex !== -1) {
                     // Update existing assignment
-                    updatedAssignments[selectedDate][existingIndex] = {
-                        ...updatedAssignments[selectedDate][existingIndex],
-                        ...newAssignment
-                    };
+                    if (!updatedAssignments[selectedDate][existingIndex].assignment2) {
+                        updatedAssignments[selectedDate][existingIndex].assignment2 = newAssignment.assignment1;
+                    } else {
+                        message += `ל${newAssignment.fullName} כבר יש שני שיבוצים. `;
+                    }
+
                 } else {
                     // Add new assignment
                     updatedAssignments[selectedDate].push(newAssignment);
                 }
             });
             
+            setAssignmentMessage(message);
+
             return updatedAssignments;
         });
         onCloseForm();
@@ -86,6 +101,9 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                 <h2 className="font-bold mb-4 text-lg sm:text-xl text-gray-700">
                     שיבוץ ליום {new Date(selectedDate).toLocaleDateString('he-IL')}
                 </h2>
+                {assignmentMessage && (
+                    <Alert>{assignmentMessage}</Alert>
+                )}
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
