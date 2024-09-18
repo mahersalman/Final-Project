@@ -535,7 +535,7 @@ app.delete('/api/assignments', async (req, res) => {
     const { date, person_id, assignmentNumber } = req.body;
 
     if (!date || !person_id || !assignmentNumber) {
-      return res.status(400).json({ message: 'Date, person_id, and assignmentNumber are required' });
+      return res.status(400).json({ message: 'Missing required fields', required: ['date', 'person_id', 'assignmentNumber'] });
     }
 
     const startDate = new Date(date);
@@ -567,7 +567,7 @@ app.delete('/api/assignments', async (req, res) => {
     res.json({ message: 'Assignment deleted successfully' });
   } catch (error) {
     console.error('Error deleting assignment:', error);
-    res.status(500).json({ message: 'Error deleting assignment', error: error.message });
+    res.status(500).json({ message: 'Error deleting assignment', error: error.message, stack: error.stack });
   }
 });
 

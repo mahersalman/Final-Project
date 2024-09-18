@@ -150,42 +150,29 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
   // Function to handle assignment deletion
   const handleDeleteAssignment = async (fullName, assignmentNumber) => {
     try {
-      setIsLoading(true);
       const employee = employees.find(e => `${e.first_name} ${e.last_name}` === fullName);
       if (!employee) {
         throw new Error('Employee not found');
       }
-
-      const response = await axios.delete(`http://localhost:5001/api/assignments`, {
+  
+      const response = await axios.delete('http://localhost:5001/api/assignments', {
         data: {
           date: selectedDate,
           person_id: employee.person_id,
-          assignment_number: assignmentNumber
+          assignmentNumber: assignmentNumber
         }
       });
-
+  
       if (response.status === 200) {
-        setAssignments(prevAssignments => {
-          const updatedAssignments = { ...prevAssignments };
-          const employeeAssignment = updatedAssignments[selectedDate]?.find(a => a.fullName === fullName);
-          if (employeeAssignment) {
-            if (assignmentNumber === 1) {
-              employeeAssignment.assignment1 = '';
-            } else {
-              employeeAssignment.assignment2 = '';
-            }
-          }
-          return updatedAssignments;
-        });
+        // Handle successful deletion
         setAssignmentMessage(`השיבוץ של ${fullName} נמחק בהצלחה.`);
+        await fetchAssignments(); // Refresh assignments
       } else {
-        throw new Error('1Failed to delete assignment');
+        throw new Error('Failed to delete assignment');
       }
-      setIsLoading(false);
     } catch (error) {
       console.error('Error deleting assignment:', error);
-      setError('2Failed to delete assignment');
-      setIsLoading(false);
+      setError('Failed to delete assignment: ' + error.message);
     }
   };
 
