@@ -36,6 +36,7 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     const [error, setError] = useState(null);
     const [assignmentMessage, setAssignmentMessage] = useState('');
 
+
     useEffect(() => {
         fetchEmployees();
     }, []);
@@ -60,6 +61,7 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
             }
             
             let message = '';
+
             newAssignments.forEach(newAssignment => {
                 const existingIndex = updatedAssignments[selectedDate].findIndex(
                     a => a.fullName === newAssignment.fullName
@@ -71,6 +73,7 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                     } else {
                         message += `ל${newAssignment.fullName} כבר יש שני שיבוצים. `;
                     }
+
                 } else {
                     // Add new assignment
                     updatedAssignments[selectedDate].push(newAssignment);
@@ -78,6 +81,7 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
             });
             
             setAssignmentMessage(message);
+
             return updatedAssignments;
         });
         onCloseForm();
