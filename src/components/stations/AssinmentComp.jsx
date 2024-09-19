@@ -190,7 +190,7 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
         />
         <button
           onClick={exportToExcel}
-          className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+          className="bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded inline-flex items-center"
         >
           <FileDown className="mr-2" />
           ייצא לאקסל
