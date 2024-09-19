@@ -1,14 +1,25 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { CalendarIcon, Trash2, FileDown } from 'lucide-react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import AddAssignmentForm from './AddAssignmentForm';
+
 
 // Alert component for displaying messages
 const Alert = ({ children, type = 'info' }) => {
   const bgColor = type === 'error' ? 'bg-red-100' : 'bg-yellow-100';
   const borderColor = type === 'error' ? 'border-red-500' : 'border-yellow-500';
   const textColor = type === 'error' ? 'text-red-700' : 'text-yellow-700';
+
+
+  return (
+    <div className={`${bgColor} border-l-4 ${borderColor} ${textColor} p-4 mb-4`} role="alert">
+      {children}
+    </div>
+  );
+};
+
 
   return (
     <div className={`${bgColor} border-l-4 ${borderColor} ${textColor} p-4 mb-4`} role="alert">
@@ -38,50 +49,54 @@ const DatePicker = ({ selectedDate, onDateChange }) => {
 
 // Main AssignmentComp component
 const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-    const [employees, setEmployees] = useState([]);
-    const [assignments, setAssignments] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [assignmentMessage, setAssignmentMessage] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [employees, setEmployees] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [assignmentMessage, setAssignmentMessage] = useState('');
+
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/employees');
+      setEmployees(response.data);
+    } catch (err) {
+      console.error('Error fetching employees:', err);
+      throw new Error('Failed to fetch employees: ' + err.message);
+    }
+  }, []);
+
+  const fetchAssignments = useCallback(async () => {
+    try {
+      const response = await axios.get(`http://localhost:5001/api/assignments?date=${selectedDate}`);
+      setAssignments(response.data);
+    } catch (err) {
+      console.error('Error fetching assignments:', err);
+      throw new Error('Failed to fetch assignments: ' + err.message);
+    }
+  }, [selectedDate]);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         await fetchEmployees();
         await fetchAssignments();
       } catch (err) {
-        setError('Failed to fetch data');
+        setError('Failed to fetch data: ' + err.message);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [selectedDate]);
-
-  const fetchEmployees = async () => {
-    try {
-      const response = await axios.get('http://localhost:5001/api/employees');
-      setEmployees(response.data);
-    } catch (err) {
-      throw new Error('Failed to fetch employees');
-    }
-  };
-
-  const fetchAssignments = async () => {
-    try {
-      const response = await axios.get(`http://localhost:5001/api/assignments?date=${selectedDate}`);
-      setAssignments(response.data);
-    } catch (err) {
-      throw new Error('Failed to fetch assignments');
-    }
-  };
+  }, [fetchEmployees, fetchAssignments]);
 
   const handleAssignmentSubmit = async (newAssignments) => {
     try {
       setIsLoading(true);
+      setError(null);
       let message = '';
 
       for (const newAssignment of newAssignments) {
@@ -104,11 +119,11 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
         }
       }
 
-      await fetchAssignments(); // Refresh assignments after adding new ones
+      await fetchAssignments();
       setAssignmentMessage(message || 'השיבוצים נוספו בהצלחה');
     } catch (error) {
       console.error('Error submitting assignments:', error);
-      setError('Failed to submit assignments');
+      setError('Failed to submit assignments: ' + error.message);
     } finally {
       setIsLoading(false);
       onCloseForm();
@@ -132,13 +147,22 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     }
   };
 
-  const handleDeleteAssignment = async (personId, assignmentId) => {
+  const handleDeleteAssignment = async (fullName, assignmentIndex) => {
     try {
-      const response = await axios.delete(`http://localhost:5001/api/assignments/${assignmentId}`);
+      const employee = employees.find(e => `${e.first_name} ${e.last_name}` === fullName);
+      if (!employee) {
+        throw new Error('Employee not found');
+      }
+  
+      const response = await axios.delete('http://localhost:5001/api/assignments', {
+        data: {
+          date: selectedDate,
+          person_id: employee.person_id,
+          assignmentNumber: assignmentIndex + 1  // Adding 1 because array index is 0-based
+        }
+      });
   
       if (response.status === 200) {
-        const employee = employees.find(e => e.person_id === personId);
-        const fullName = employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown';
         setAssignmentMessage(`השיבוץ של ${fullName} נמחק בהצלחה.`);
         await fetchAssignments(); // Refresh assignments
       } else {
@@ -207,34 +231,23 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                 return (
                   <tr key={employee.person_id} className="hover:bg-gray-50">
                     <td className="border border-gray-300 p-2 text-right">{`${employee.first_name} ${employee.last_name}`}</td>
-                    <td className="border border-gray-300 p-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-right">{employeeAssignments[0]?.workingStation_name || ''}</span>
-                        {employeeAssignments[0] && (
-                          <button
-                            onClick={() => handleDeleteAssignment(employee.person_id, employeeAssignments[0].id)}
-                            className="text-red-600 hover:text-red-800 ml-2"
-                            title="מחק שיבוץ"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-right">{employeeAssignments[1]?.workingStation_name || ''}</span>
-                        {employeeAssignments[1] && (
-                          <button
-                            onClick={() => handleDeleteAssignment(employee.person_id, employeeAssignments[1].id)}
-                            className="text-red-600 hover:text-red-800 ml-2"
-                            title="מחק שיבוץ"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
+                    {[0, 1].map((index) => (
+                      <td key={index} className="border border-gray-300 p-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-right">{employeeAssignments[index]?.workingStation_name || ''}</span>
+                          {employeeAssignments[index] && (
+                            <button
+                              onClick={() => handleDeleteAssignment(`${employee.first_name} ${employee.last_name}`, index)}
+                              className="text-red-600 hover:text-red-800 ml-2"
+                              title="מחק שיבוץ"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    ))}
+
                   </tr>
                 );
               })}
