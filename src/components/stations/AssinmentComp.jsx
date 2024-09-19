@@ -1,13 +1,17 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { CalendarIcon, Trash2, FileDown } from 'lucide-react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import AddAssignmentForm from './AddAssignmentForm';
 
+
+// Alert component for displaying messages
 const Alert = ({ children, type = 'info' }) => {
   const bgColor = type === 'error' ? 'bg-red-100' : 'bg-yellow-100';
   const borderColor = type === 'error' ? 'border-red-500' : 'border-yellow-500';
   const textColor = type === 'error' ? 'text-red-700' : 'text-yellow-700';
+
 
   return (
     <div className={`${bgColor} border-l-4 ${borderColor} ${textColor} p-4 mb-4`} role="alert">
@@ -16,6 +20,15 @@ const Alert = ({ children, type = 'info' }) => {
   );
 };
 
+
+  return (
+    <div className={`${bgColor} border-l-4 ${borderColor} ${textColor} p-4 mb-4`} role="alert">
+      {children}
+    </div>
+  );
+};
+
+// DatePicker component
 const DatePicker = ({ selectedDate, onDateChange }) => {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-white border border-gray-300 rounded-md p-2 shadow-sm hover:border-blue-500 transition-colors duration-200">
@@ -34,6 +47,7 @@ const DatePicker = ({ selectedDate, onDateChange }) => {
   );
 };
 
+// Main AssignmentComp component
 const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [employees, setEmployees] = useState([]);
@@ -233,6 +247,7 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                         </div>
                       </td>
                     ))}
+
                   </tr>
                 );
               })}
