@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const mqtt = require('mqtt');
 const path = require('path');
+const authRoutes = require('./routes/authRoutes');
+
 const geneticAlgorithm = require('./GeneticAlgorithm.js');
 const { getTopEmployeesForStation } = require('./GeneticAlgorithm');
 const { getAllSortedEmployeesForStation } = require('./GeneticAlgorithm');
@@ -17,13 +19,14 @@ app.use(cors());
 app.use(express.json());
 
 // Import routes after initializing app
-const userRouter = require('./routes/users');
+const userRouter = require('./routes/authRoutes');
 const Station = require('./models/station');
 const Person = require('./models/person');
 const Qualification = require('./models/qualification');
 const Product = require('./models/product'); 
 const WorkingStation = require('./models/workingStation');
 const Assignment = require('./models/assignment');
+const User = require('./models/user');
 
 
 const mongoURI = "mongodb+srv://admin:Aa112233@migdalor.uqujiwf.mongodb.net/migdalor?retryWrites=true&w=majority&appName=migdalor";
@@ -42,6 +45,8 @@ mongoose.connect(mongoURI, {
   }
 })
 .catch(err => console.log(err));
+
+app.use('/api/users', userRouter);
 
 // MQTT Client setup
 const mqttBroker = 'mqtt://test.mosquitto.org'; // Replace with MQTT broker address
@@ -77,7 +82,66 @@ mqttClient.on('message', async (topic, message) => {
 });
 
 // Define Routes
-app.use('/users', userRouter);
+app.use('/api', authRoutes);
+
+// Login route
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid username or password' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid username or password' });
+    }
+
+    const token = jwt.sign({ userId: user._id }, 'your_jwt_secret', { expiresIn: '1h' });
+    res.json({ success: true, token });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Forgot password route
+app.post('/api/forgot-password', async (req, res) => {
+  const { username } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+
+    res.json({ message: 'Password reset' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Reset password route
+app.post('/api/reset-password', async (req, res) => {
+  const { username, newPassword } = req.body;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 //get all stations
 app.get('/api/stations', async (req, res) => {
