@@ -1,76 +1,109 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, ResponsiveContainer } from 'recharts';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 
-const ReportDisplay = ({ reportData, reportType }) => {
-  if (!reportData || reportData.length === 0) {
-    return <div>No data available for the selected criteria.</div>;
-  }
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-  const renderMonthlyProductionChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <LineChart data={reportData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="_id" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Line type="monotone" dataKey="totalProduction" stroke="#8884d8" name="Total Production" />
-      </LineChart>
-    </ResponsiveContainer>
-  );
+const ReportDisplay = ({ reportData, reportType, station, date, employee }) => {
+  if (!reportData) return null;
 
-  const renderWorkstationChart = () => (
-    <div>
-      {reportData.map((ws, index) => (
-        <div key={index}>
-          <h3>{ws.workstation}</h3>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={ws.data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="_id" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="production" stroke="#82ca9d" name="Production" />
-            </LineChart>
-          </ResponsiveContainer>
+  const renderDailyReport = () => {
+    const { goodValves, invalidValves } = reportData;
+    const total = goodValves + invalidValves;
+    const goodPercentage = ((goodValves / total) * 100).toFixed(2);
+    const invalidPercentage = ((invalidValves / total) * 100).toFixed(2);
+
+    const data = {
+      labels: ['תקין', 'לא תקין'],
+      datasets: [
+        {
+          data: [goodValves, invalidValves],
+          backgroundColor: ['#4CAF50', '#F44336'],
+        },
+      ],
+    };
+
+    const options = {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'דוח יומי',
+        },
+      },
+    };
+
+    return (
+      <div>
+        <h3>דוח יומי - {date.toLocaleDateString('he-IL')}</h3>
+        <p>תחנה: {station}</p>
+        {employee && <p>עובד: {employee}</p>}
+        <Bar data={data} options={options} />
+        <div className="mt-4">
+          <p>סה"כ רכיבים: {total}</p>
+          <p>רכיבים תקינים: {goodValves} ({goodPercentage}%)</p>
+          <p>רכיבים לא תקינים: {invalidValves} ({invalidPercentage}%)</p>
         </div>
-      ))}
-    </div>
-  );
+      </div>
+    );
+  };
 
-  const renderDailyReport = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <BarChart data={reportData}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="_id" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        <Bar dataKey="count" fill="#8884d8" />
-      </BarChart>
-    </ResponsiveContainer>
-  );
+  const renderMonthlyReport = () => {
+    const labels = reportData.map(item => item._id);
+    const goodValvesData = reportData.map(item => item.goodValves);
+    const invalidValvesData = reportData.map(item => item.invalidValves);
 
-  let chart;
-  switch (reportType) {
-    case 'monthly':
-      chart = renderMonthlyProductionChart();
-      break;
-    case 'workstation':
-      chart = renderWorkstationChart();
-      break;
-    case 'daily':
-      chart = renderDailyReport();
-      break;
-    default:
-      chart = <div>Invalid report type</div>;
-  }
+    const data = {
+      labels,
+      datasets: [
+        {
+          label: 'תקין',
+          data: goodValvesData,
+          backgroundColor: '#4CAF50',
+        },
+        {
+          label: 'לא תקין',
+          data: invalidValvesData,
+          backgroundColor: '#F44336',
+        },
+      ],
+    };
+
+    const options = {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'דוח חודשי',
+        },
+      },
+      scales: {
+        x: {
+          stacked: true,
+        },
+        y: {
+          stacked: true,
+        },
+      },
+    };
+
+    return (
+      <div>
+        <h3>דוח חודשי - {station}</h3>
+        <Bar data={data} options={options} />
+      </div>
+    );
+  };
 
   return (
-    <div>
-      <h2>Production Report</h2>
-      {chart}
+    <div className="report-container">
+      {reportType === 'daily' ? renderDailyReport() : renderMonthlyReport()}
     </div>
   );
 };

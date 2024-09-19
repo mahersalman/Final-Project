@@ -7,16 +7,15 @@ import ReportDisplay from './ReportDisplay';
 const ReportGenerator = () => {
   const [employees, setEmployees] = useState([]);
   const [stations, setStations] = useState([]);
-  const [workstations, setWorkstations] = useState({});
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedStation, setSelectedStation] = useState(null);
-  const [selectedWorkstations, setSelectedWorkstations] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [reportData, setReportData] = useState(null);
   const [reportType, setReportType] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -43,25 +42,6 @@ const ReportGenerator = () => {
     fetchStations();
   }, []);
 
-  useEffect(() => {
-    const fetchWorkstations = async () => {
-      if (selectedStation) {
-        try {
-          const response = await axios.get(`http://localhost:5001/api/workstations/${encodeURIComponent(selectedStation.station_name)}`);
-          setWorkstations(prevWorkstations => ({
-            ...prevWorkstations,
-            [selectedStation.station_name]: response.data
-          }));
-        } catch (error) {
-          console.error('Error fetching workstations:', error);
-          setError('Failed to fetch workstations');
-        }
-      }
-    };
-
-    fetchWorkstations();
-  }, [selectedStation]);
-
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp =>
       emp.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -71,17 +51,18 @@ const ReportGenerator = () => {
 
   const handleStationChange = (station) => {
     setSelectedStation(station);
-    setSelectedWorkstations([]);
     setReportData(null);
     setReportType(null);
   };
 
-  const handleWorkstationChange = (workstation) => {
-    setSelectedWorkstations(prevWorkstations =>
-      prevWorkstations.includes(workstation)
-        ? prevWorkstations.filter(w => w !== workstation)
-        : [...prevWorkstations, workstation]
-    );
+  const handleEmployeeSelect = (emp) => {
+    setSelectedEmployee(emp);
+    setReportData(null);
+    setReportType(null);
+  };
+
+  const handleClearEmployee = () => {
+    setSelectedEmployee(null);
     setReportData(null);
     setReportType(null);
   };
@@ -97,7 +78,6 @@ const ReportGenerator = () => {
 
     try {
       const params = new URLSearchParams({ station: selectedStation.station_name });
-      if (selectedWorkstations.length > 0) params.append('workstations', selectedWorkstations.join(','));
       if (selectedDate) params.append('date', selectedDate.toISOString());
       if (selectedEmployee) params.append('employee', selectedEmployee.person_id);
 
@@ -106,17 +86,44 @@ const ReportGenerator = () => {
 
       if (selectedDate) {
         setReportType('daily');
-      } else if (selectedWorkstations.length > 0) {
-        setReportType('workstation');
+      } else if (selectedEmployee) {
+        setReportType('monthlyEmployee');
       } else {
         setReportType('monthly');
       }
+      setShowReportModal(true);
     } catch (error) {
       console.error('Error generating report:', error);
       setError('Failed to generate report. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownloadReport = () => {
+    if (!reportData) return;
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+
+    // Add headers
+    if (reportType === 'daily') {
+      csvContent += "Category,Count\n";
+      csvContent += `Good Valves,${reportData.goodValves}\n`;
+      csvContent += `Invalid Valves,${reportData.invalidValves}\n`;
+    } else {
+      csvContent += "Date,Good Valves,Invalid Valves\n";
+      reportData.forEach(item => {
+        csvContent += `${item._id},${item.goodValves},${item.invalidValves}\n`;
+      });
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `report_${reportType}_${new Date().toISOString()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -138,40 +145,25 @@ const ReportGenerator = () => {
         </select>
       </div>
 
-      {selectedStation && (
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">בחר עמדות עבודה</label>
-          <div className="max-h-32 md:max-h-48 overflow-y-auto border border-gray-300 rounded-lg shadow-inner bg-white">
-            {workstations[selectedStation.station_name] && workstations[selectedStation.station_name].length > 0 ? (
-              workstations[selectedStation.station_name].map((workstation, index) => (
-                <div key={index} className="flex items-center p-2 md:p-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors duration-150">
-                  <input
-                    type="checkbox"
-                    id={`workstation-${index}`}
-                    value={workstation.workingStation_name}
-                    checked={selectedWorkstations.includes(workstation.workingStation_name)}
-                    onChange={() => handleWorkstationChange(workstation.workingStation_name)}
-                    className="form-checkbox h-4 w-4 md:h-5 md:w-5 text-[#1F6231] rounded border-gray-300 focus:ring-[#1F6231] transition duration-150 ease-in-out"
-                  />
-                  <label htmlFor={`workstation-${index}`} className="ml-2 md:ml-3 text-sm md:text-base font-medium text-gray-700">{workstation.workingStation_name}</label>
-                </div>
-              ))
-            ) : (
-              <p className="p-3 text-gray-500 text-sm md:text-base">לא נמצאו עמדות עבודה.</p>
-            )}
-          </div>
-        </div>
-      )}
-
       <div className="mb-4">
         <label className="block mb-2 font-semibold">בחר עובד (אופציונלי)</label>
-        <input
-          type="text"
-          placeholder="חיפוש עובד..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full p-2 border rounded mb-2"
-        />
+        <div className="flex items-center mb-2">
+          <input
+            type="text"
+            placeholder="חיפוש עובד..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-grow p-2 border rounded"
+          />
+          {selectedEmployee && (
+            <button
+              onClick={handleClearEmployee}
+              className="ml-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            >
+              נקה
+            </button>
+          )}
+        </div>
         <div className="max-h-32 md:max-h-48 overflow-y-auto border border-gray-300 rounded-lg">
           {filteredEmployees.length === 0 ? (
             <p className="p-4 text-center text-gray-500">לא נמצאו עובדים</p>
@@ -180,11 +172,7 @@ const ReportGenerator = () => {
               {filteredEmployees.map((emp) => (
                 <li
                   key={emp._id}
-                  onClick={() => {
-                    setSelectedEmployee(emp);
-                    setReportData(null);
-                    setReportType(null);
-                  }}
+                  onClick={() => handleEmployeeSelect(emp)}
                   className={`cursor-pointer p-2 md:p-3 rounded transition duration-150 ease-in-out ${
                     selectedEmployee && selectedEmployee._id === emp._id
                       ? 'bg-[#246B35] text-white'
@@ -218,7 +206,6 @@ const ReportGenerator = () => {
         <h3 className="font-semibold mb-2">תנאי הדוח הנוכחי:</h3>
         <ul className="list-disc list-inside">
           <li>תחנה: {selectedStation ? selectedStation.station_name : 'לא נבחרה'}</li>
-          <li>עמדות עבודה: {selectedWorkstations.length > 0 ? selectedWorkstations.join(', ') : 'לא נבחרו'}</li>
           <li>עובד: {selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : 'לא נבחר'}</li>
           <li>תאריך: {selectedDate ? selectedDate.toLocaleDateString('he-IL') : 'לא נבחר'}</li>
         </ul>
@@ -226,7 +213,11 @@ const ReportGenerator = () => {
 
       <button
         onClick={handleGenerateReport}
-        className="mt-4 w-full bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out text-sm md:text-base"
+        className={`mt-4 w-full font-bold py-2 px-4 rounded transition duration-150 ease-in-out text-sm md:text-base ${
+          selectedStation
+            ? 'bg-[#1F6231] hover:bg-[#309d49] text-white'
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+        }`}
         disabled={!selectedStation || loading}
       >
         {loading ? 'מייצר דוח...' : 'יצירת דוח'}
@@ -234,15 +225,32 @@ const ReportGenerator = () => {
 
       {error && <p className="text-red-500 mt-2">{error}</p>}
 
-      {reportData && (
-        <ReportDisplay
-          reportData={reportData}
-          reportType={reportType}
-          station={selectedStation.station_name}
-          workstations={selectedWorkstations}
-          date={selectedDate}
-          employee={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : null}
-        />
+      {showReportModal && reportData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+            <ReportDisplay
+              reportData={reportData}
+              reportType={reportType}
+              station={selectedStation.station_name}
+              date={selectedDate}
+              employee={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : null}
+            />
+            <div className="mt-4 flex justify-between">
+              <button
+                onClick={handleDownloadReport}
+                className="bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
+              >
+                הורד דוח
+              </button>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded"
+              >
+                סגור
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
