@@ -40,59 +40,45 @@ const DatePicker = ({ selectedDate, onDateChange }) => {
 const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [employees, setEmployees] = useState([]);
-    const [assignments, setAssignments] = useState({});
+    const [assignments, setAssignments] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [assignmentMessage, setAssignmentMessage] = useState('');
 
-  // Fetch employees and assignments on component mount and when date changes
   useEffect(() => {
-    fetchEmployees();
-    fetchAssignments();
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        await fetchEmployees();
+        await fetchAssignments();
+      } catch (err) {
+        setError('Failed to fetch data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, [selectedDate]);
 
-  // Function to fetch employees from the server
   const fetchEmployees = async () => {
     try {
-      setIsLoading(true);
       const response = await axios.get('http://localhost:5001/api/employees');
       setEmployees(response.data);
-      setIsLoading(false);
     } catch (err) {
-      setError('Failed to fetch employees');
-      setIsLoading(false);
+      throw new Error('Failed to fetch employees');
     }
   };
 
-  // Function to fetch assignments for the selected date
   const fetchAssignments = async () => {
     try {
-      setIsLoading(true);
       const response = await axios.get(`http://localhost:5001/api/assignments?date=${selectedDate}`);
-      const fetchedAssignments = response.data.reduce((acc, assignment) => {
-        const employee = employees.find(e => e.person_id === assignment.person_id);
-        if (employee) {
-          const fullName = `${employee.first_name} ${employee.last_name}`;
-          if (!acc[fullName]) {
-            acc[fullName] = { assignment1: '', assignment2: '' };
-          }
-          if (!acc[fullName].assignment1) {
-            acc[fullName].assignment1 = assignment.workingStation_name;
-          } else {
-            acc[fullName].assignment2 = assignment.workingStation_name;
-          }
-        }
-        return acc;
-      }, {});
-      setAssignments({ [selectedDate]: Object.entries(fetchedAssignments).map(([fullName, assignments]) => ({ fullName, ...assignments })) });
-      setIsLoading(false);
+      setAssignments(response.data);
     } catch (err) {
-      setError('Failed to fetch assignments');
-      setIsLoading(false);
+      throw new Error('Failed to fetch assignments');
     }
   };
 
-  // Function to handle new assignment submissions
   const handleAssignmentSubmit = async (newAssignments) => {
     try {
       setIsLoading(true);
@@ -105,12 +91,12 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
           continue;
         }
 
-        const existingAssignments = assignments[selectedDate]?.find(a => a.fullName === newAssignment.fullName) || { assignment1: '', assignment2: '' };
+        const existingAssignments = assignments.filter(a => a.person_id === employee.person_id);
         
-        if (!existingAssignments.assignment1) {
+        if (existingAssignments.length === 0) {
           await saveAssignmentToDB(employee, newAssignment.assignment1, 1);
           message += `נוסף שיבוץ ראשון ל${newAssignment.fullName}. `;
-        } else if (!existingAssignments.assignment2) {
+        } else if (existingAssignments.length === 1) {
           await saveAssignmentToDB(employee, newAssignment.assignment1, 2);
           message += `נוסף שיבוץ שני ל${newAssignment.fullName}. `;
         } else {
@@ -120,23 +106,22 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
 
       await fetchAssignments(); // Refresh assignments after adding new ones
       setAssignmentMessage(message || 'השיבוצים נוספו בהצלחה');
-      setIsLoading(false);
     } catch (error) {
       console.error('Error submitting assignments:', error);
       setError('Failed to submit assignments');
+    } finally {
       setIsLoading(false);
+      onCloseForm();
     }
-    onCloseForm();
   };
 
-  // Function to save assignment to DB
   const saveAssignmentToDB = async (employee, workingStation, assignmentNumber) => {
     try {
       const assignmentData = {
         date: selectedDate,
         workingStation_name: workingStation,
         person_id: employee.person_id,
-        number_of_hours: 8 // You might want to make this dynamic
+        number_of_hours: 4
       };
 
       const response = await axios.post('http://localhost:5001/api/assignments', assignmentData);
@@ -147,24 +132,13 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     }
   };
 
-  // Function to handle assignment deletion
-  const handleDeleteAssignment = async (fullName, assignmentNumber) => {
+  const handleDeleteAssignment = async (personId, assignmentId) => {
     try {
-      const employee = employees.find(e => `${e.first_name} ${e.last_name}` === fullName);
-      if (!employee) {
-        throw new Error('Employee not found');
-      }
-  
-      const response = await axios.delete('http://localhost:5001/api/assignments', {
-        data: {
-          date: selectedDate,
-          person_id: employee.person_id,
-          assignmentNumber: assignmentNumber
-        }
-      });
+      const response = await axios.delete(`http://localhost:5001/api/assignments/${assignmentId}`);
   
       if (response.status === 200) {
-        // Handle successful deletion
+        const employee = employees.find(e => e.person_id === personId);
+        const fullName = employee ? `${employee.first_name} ${employee.last_name}` : 'Unknown';
         setAssignmentMessage(`השיבוץ של ${fullName} נמחק בהצלחה.`);
         await fetchAssignments(); // Refresh assignments
       } else {
@@ -176,18 +150,16 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     }
   };
 
-  // Function to export assignments to Excel
   const exportToExcel = () => {
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.aoa_to_sheet([
       ['שם ושם משפחה', 'שיבוץ 1', 'שיבוץ 2'],
       ...employees.map(employee => {
-        const fullName = `${employee.first_name} ${employee.last_name}`;
-        const assignment = assignments[selectedDate]?.find(a => a.fullName === fullName);
+        const employeeAssignments = assignments.filter(a => a.person_id === employee.person_id);
         return [
-          fullName,
-          assignment?.assignment1 || '',
-          assignment?.assignment2 || ''
+          `${employee.first_name} ${employee.last_name}`,
+          employeeAssignments[0]?.workingStation_name || '',
+          employeeAssignments[1]?.workingStation_name || ''
         ];
       })
     ]);
@@ -196,10 +168,8 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     XLSX.writeFile(workbook, `Assignments_${selectedDate}.xlsx`);
   };
 
-  // Render loading state
   if (isLoading) return <div>טוען...</div>;
   
-  // Main component render
   return (
     <div className="p-4 sm:p-6 bg-gray-50 rounded-lg shadow-md">
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800">טבלת שיבוץ יומי</h1>
@@ -232,18 +202,17 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
               </tr>
             </thead>
             <tbody>
-              {employees.map((employee, index) => {
-                const fullName = `${employee.first_name} ${employee.last_name}`;
-                const assignment = assignments[selectedDate]?.find(a => a.fullName === fullName);
+              {employees.map((employee) => {
+                const employeeAssignments = assignments.filter(a => a.person_id === employee.person_id);
                 return (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 p-2 text-right">{fullName}</td>
+                  <tr key={employee.person_id} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 p-2 text-right">{`${employee.first_name} ${employee.last_name}`}</td>
                     <td className="border border-gray-300 p-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-right">{assignment?.assignment1 || ''}</span>
-                        {assignment?.assignment1 && (
+                        <span className="text-right">{employeeAssignments[0]?.workingStation_name || ''}</span>
+                        {employeeAssignments[0] && (
                           <button
-                            onClick={() => handleDeleteAssignment(fullName, 1)}
+                            onClick={() => handleDeleteAssignment(employee.person_id, employeeAssignments[0].id)}
                             className="text-red-600 hover:text-red-800 ml-2"
                             title="מחק שיבוץ"
                           >
@@ -254,10 +223,10 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                     </td>
                     <td className="border border-gray-300 p-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-right">{assignment?.assignment2 || ''}</span>
-                        {assignment?.assignment2 && (
+                        <span className="text-right">{employeeAssignments[1]?.workingStation_name || ''}</span>
+                        {employeeAssignments[1] && (
                           <button
-                            onClick={() => handleDeleteAssignment(fullName, 2)}
+                            onClick={() => handleDeleteAssignment(employee.person_id, employeeAssignments[1].id)}
                             className="text-red-600 hover:text-red-800 ml-2"
                             title="מחק שיבוץ"
                           >
@@ -284,6 +253,5 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
     </div>
   );
 };
-
 
 export default AssignmentComp;
