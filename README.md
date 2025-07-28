@@ -12,7 +12,13 @@ To run the server:
    ```
    cd backend
    ```
-2. Start the server:
+2. install server libraries:
+
+   ```
+   npm install
+   ```
+
+3. Start the server:
    ```
    node server.js
    ```
