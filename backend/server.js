@@ -29,7 +29,7 @@ const Assignment = require("./models/assignment");
 const User = require("./models/User");
 
 const mongoURI =
-  "mongodb+srv://admin:Aa112233@migdalor.uqujiwf.mongodb.net/migdalor?retryWrites=true&w=majority&appName=migdalor";
+  "";
 console.log("Mongo URI:", mongoURI);
 
 // Connect to MongoDB
