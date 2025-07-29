@@ -5,7 +5,8 @@ const Qualification = require("../models/Qualification");
 const {
   getTopEmployeesForStation,
   getAllSortedEmployeesForStation,
-} = require("../utils/geneticAlgorithm.js");
+  geneticAlgorithm,
+} = require("../geneticAlgorithm.js");
 const Station = require("../models/Station");
 
 // Get all employees
@@ -210,7 +211,13 @@ router.post("/assign-employees", async (req, res) => {
 
     // Create a detailed assignment object
     const detailedAssignment = {};
-    Object.entries(bestAssignment).forEach(([stationId, employeeId]) => {
+    const optimalAssignment = geneticAlgorithm(
+      employees,
+      stations,
+      qualifications
+    );
+
+    Object.entries(optimalAssignment).forEach(([stationId, employeeId]) => {
       const station = stations.find((s) => s.station_id === stationId);
       const employee = employees.find((e) => e._id.toString() === employeeId);
       const qualification = qualifications.find(
@@ -233,5 +240,4 @@ router.post("/assign-employees", async (req, res) => {
     });
   }
 });
-
 module.exports = router;
