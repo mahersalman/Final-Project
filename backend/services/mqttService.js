@@ -5,7 +5,11 @@ let mqttClient = null;
 
 function setupMQTT() {
   // MQTT Client setup
-  const mqttBroker = process.env.MQTT_BROKER || "mqtt://test.mosquitto.org"; // Replace with MQTT broker address
+  const mqttBroker = process.env.MQTT_BROKER;
+  if (!mqttBroker) {
+    console.error("❌ MQTT_BROKER environment variable is not set");
+    return;
+  }
   mqttClient = mqtt.connect(mqttBroker);
 
   mqttClient.on("connect", () => {
