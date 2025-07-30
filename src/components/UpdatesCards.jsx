@@ -1,36 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import serverUrl from "config/api";
 
 const UpdatesSection = () => {
   const [sections, setSections] = useState([
     { name: "עובדים לא פעילים", value: 0, color: "#FDF5F5" },
     { name: "עובדים פעילים", value: 0, color: "#E9F7F5" },
     { name: "מס' פגומים יומי", value: 0, color: "#F5F8FD" },
-    { name: "עמדות לא פעילות", value: 0, color: "#FDFCF5" }
+    { name: "עמדות לא פעילות", value: 0, color: "#FDFCF5" },
   ]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('Fetching dashboard data...');
-        const response = await fetch('http://localhost:5001/api/dashboard-data');
-        console.log('Response status:', response.status);
+        console.log("Fetching dashboard data...");
+        const response = await fetch(`${serverUrl}/api/dashboard-data`);
+        console.log("Response status:", response.status);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('Parsed data:', data);
+        console.log("Parsed data:", data);
 
-        setSections(prevSections => [
+        setSections((prevSections) => [
           { ...prevSections[0], value: data.inactiveWorkers },
-          { ...prevSections[1], value: data.activeWorkers},
+          { ...prevSections[1], value: data.activeWorkers },
           { ...prevSections[2], value: data.dailyDefects },
-          { ...prevSections[3], value: data.inactiveStations }
+          { ...prevSections[3], value: data.inactiveStations },
         ]);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
         setError(error.message);
       }
     };
@@ -53,7 +54,9 @@ const UpdatesSection = () => {
             <h2 className="text-lg text-gray-800 mb-5">{section.name}</h2>
             <div className="flex flex-col items-center">
               <span className="text-4xl font-bold mb-1">{section.value}</span>
-              {section.today && <span className="text-sm">{section.today}</span>}
+              {section.today && (
+                <span className="text-sm">{section.today}</span>
+              )}
             </div>
             <button className="mt-2 text-sm text-blue-600 hover:text-blue-800 focus:outline-none">
               צפייה בפרטים &#x3E;

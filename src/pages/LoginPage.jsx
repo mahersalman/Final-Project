@@ -1,82 +1,103 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import serverUrl from "config/api";
 
 const LoginPage = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
+  const [newPassword, setNewPassword] = useState("");
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
-      const response = await axios.post('http://localhost:5001/api/login', { username, password });
+      const response = await axios.post(`${serverUrl}/api/login`, {
+        username,
+        password,
+      });
       if (response.data.success) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        navigate('/home');
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        navigate("/home");
       }
     } catch (err) {
-      console.error('Login error:', err);
-      setError(err.response?.data?.message || 'An error occurred during login');
+      console.error("Login error:", err);
+      setError(err.response?.data?.message || "An error occurred during login");
     }
   };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     if (!username) {
-      setError('Please enter your username');
+      setError("Please enter your username");
       return;
     }
 
     try {
-      const response = await axios.post('http://localhost:5001/api/forgot-password', { username });
+      const response = await axios.post(`${serverUrl}/api/forgot-password`, {
+        username,
+      });
       setSuccess(response.data.message);
       setIsResettingPassword(true);
     } catch (err) {
-      console.error('Forgot password error:', err);
-      setError(err.response?.data?.message || 'An error occurred');
+      console.error("Forgot password error:", err);
+      setError(err.response?.data?.message || "An error occurred");
     }
   };
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
-      const response = await axios.post('http://localhost:5001/api/reset-password', { username, newPassword });
+      const response = await axios.post(`${serverUrl}/api/reset-password`, {
+        username,
+        newPassword,
+      });
       setSuccess(response.data.message);
       setIsResettingPassword(false);
-      setNewPassword('');
+      setNewPassword("");
     } catch (err) {
-      console.error('Reset password error:', err);
-      setError(err.response?.data?.message || 'An error occurred');
+      console.error("Reset password error:", err);
+      setError(err.response?.data?.message || "An error occurred");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative" style={{ backgroundImage: `url('/loginPic.jpg')` }}>
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
+      style={{ backgroundImage: `url('/loginPic.jpg')` }}
+    >
       <div className="absolute inset-0 bg-black opacity-50"></div>
       <div className="z-10 max-w-md w-full mx-auto p-8 bg-white bg-opacity-90 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-800 text-center mb-8">התחברות</h2>
+        <h2 className="text-2xl font-bold text-gray-800 text-center mb-8">
+          התחברות
+        </h2>
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-        {success && <p className="text-green-500 text-center mb-4">{success}</p>}
+        {success && (
+          <p className="text-green-500 text-center mb-4">{success}</p>
+        )}
         {!isResettingPassword ? (
           <form onSubmit={handleSubmit} className="flex flex-col items-center">
             <div className="mb-4 w-full">
-              <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2 text-center">שם משתמש</label>
+              <label
+                htmlFor="username"
+                className="block text-gray-700 text-sm font-bold mb-2 text-center"
+              >
+                שם משתמש
+              </label>
               <input
                 type="text"
                 id="username"
@@ -88,7 +109,12 @@ const LoginPage = () => {
               />
             </div>
             <div className="mb-6 w-full">
-              <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2 text-center">סיסמה</label>
+              <label
+                htmlFor="password"
+                className="block text-gray-700 text-sm font-bold mb-2 text-center"
+              >
+                סיסמה
+              </label>
               <input
                 type="password"
                 id="password"
@@ -114,9 +140,17 @@ const LoginPage = () => {
             </button>
           </form>
         ) : (
-          <form onSubmit={handleResetPassword} className="flex flex-col items-center">
+          <form
+            onSubmit={handleResetPassword}
+            className="flex flex-col items-center"
+          >
             <div className="mb-4 w-full">
-              <label htmlFor="newPassword" className="block text-gray-700 text-sm font-bold mb-2 text-center">סיסמה חדשה</label>
+              <label
+                htmlFor="newPassword"
+                className="block text-gray-700 text-sm font-bold mb-2 text-center"
+              >
+                סיסמה חדשה
+              </label>
               <input
                 type="password"
                 id="newPassword"

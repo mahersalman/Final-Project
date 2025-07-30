@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import EmployeeCard from './EmployeeCard';
-import AddEmployeeForm from './AddEmployeeForm';
-import DepartmentDropdown from '../DepartmentDropdown';
-import EmployeeList from '../EmployeeList';
+import React, { useState, useEffect } from "react";
+import EmployeeCard from "./EmployeeCard";
+import AddEmployeeForm from "./AddEmployeeForm";
+import DepartmentDropdown from "../DepartmentDropdown";
+import EmployeeList from "../EmployeeList";
 import { FaFileExcel } from "react-icons/fa";
-import * as XLSX from 'xlsx';
-import axios from 'axios';
+import * as XLSX from "xlsx";
+import axios from "axios";
+import serverUrl from "config/api";
 
 const EmployeeItem = () => {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [showAddForm, setShowAddForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,43 +23,57 @@ const EmployeeItem = () => {
   const fetchEmployees = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:5001/api/employees');
+      const response = await axios.get(`${serverUrl}/api/employees`);
       setEmployees(response.data);
       setIsLoading(false);
     } catch (err) {
-      setError('Failed to fetch employees');
+      setError("Failed to fetch employees");
       setIsLoading(false);
     }
   };
 
   const handleUpdateEmployee = async (updatedEmployee) => {
     try {
-      await axios.put(`http://localhost:5001/api/employees/${updatedEmployee.person_id}`, updatedEmployee);
-      setEmployees(employees.map(emp => 
-        emp.person_id === updatedEmployee.person_id ? updatedEmployee : emp
-      ));
-      if (selectedEmployee && selectedEmployee.person_id === updatedEmployee.person_id) {
+      await axios.put(
+        `${serverUrl}/api/employees/${updatedEmployee.person_id}`,
+        updatedEmployee
+      );
+      setEmployees(
+        employees.map((emp) =>
+          emp.person_id === updatedEmployee.person_id ? updatedEmployee : emp
+        )
+      );
+      if (
+        selectedEmployee &&
+        selectedEmployee.person_id === updatedEmployee.person_id
+      ) {
         setSelectedEmployee(updatedEmployee);
       }
     } catch (error) {
-      console.error('Error updating employee:', error);
+      console.error("Error updating employee:", error);
     }
   };
 
-  const filteredEmployees = selectedDepartment === 'all'
-    ? employees
-    : employees.filter((emp) => emp.department === selectedDepartment);
+  const filteredEmployees =
+    selectedDepartment === "all"
+      ? employees
+      : employees.filter((emp) => emp.department === selectedDepartment);
 
   const exportToExcel = () => {
     const workSheet = XLSX.utils.json_to_sheet(filteredEmployees);
     const workBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workBook, workSheet, "Employees");
-    const excelBuffer = XLSX.write(workBook, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const excelBuffer = XLSX.write(workBook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
     const url = window.URL.createObjectURL(data);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.setAttribute('download', 'employees.xlsx');
+    link.setAttribute("download", "employees.xlsx");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -94,7 +109,7 @@ const EmployeeItem = () => {
           />
         </div>
         <div className="h-[50vh] lg:h-[calc(80vh-200px)] min-w-[250px]">
-          <EmployeeList 
+          <EmployeeList
             filteredEmployees={filteredEmployees}
             selectedEmployee={selectedEmployee}
             setSelectedEmployee={setSelectedEmployee}
@@ -111,10 +126,10 @@ const EmployeeItem = () => {
 
       {/* Spacer div for larger screens */}
       <div className="hidden lg:block lg:w-8"></div>
-      
+
       <div className="w-full lg:w-2/3 xl:w-3/4 mt-6 lg:mt-0">
-        <EmployeeCard 
-          employee={selectedEmployee} 
+        <EmployeeCard
+          employee={selectedEmployee}
           onUpdateEmployee={handleUpdateEmployee}
         />
         <button

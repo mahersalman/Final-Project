@@ -1,12 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from "react";
 
-const EmployeeList = ({ filteredEmployees, selectedEmployee, setSelectedEmployee }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+const EmployeeList = ({
+  filteredEmployees,
+  selectedEmployee,
+  setSelectedEmployee,
+}) => {
+  const [searchQuery, setSearchQuery] = useState("");
 
   const searchedEmployees = useMemo(() => {
-    return filteredEmployees.filter(emp => 
-      emp.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.last_name.toLowerCase().includes(searchQuery.toLowerCase())
+    return filteredEmployees.filter(
+      (emp) =>
+        emp.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.last_name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [filteredEmployees, searchQuery]);
 
@@ -32,8 +37,8 @@ const EmployeeList = ({ filteredEmployees, selectedEmployee, setSelectedEmployee
                 onClick={() => setSelectedEmployee(emp)}
                 className={`cursor-pointer p-3 rounded transition duration-150 ease-in-out ${
                   selectedEmployee && selectedEmployee._id === emp._id
-                    ? 'bg-[#246B35] text-white'
-                    : 'hover:bg-gray-100'
+                    ? "bg-[#246B35] text-white"
+                    : "hover:bg-gray-100"
                 }`}
               >
                 {emp.first_name} {emp.last_name}

@@ -1,24 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from "react";
+import axios from "axios";
+import serverUrl from "config/api";
 
-const ProductDropdown = ({ value, onChange, includeAllOption = false, className = '' }) => {
-const [products, setProducts] = useState([]);
+const ProductDropdown = ({
+  value,
+  onChange,
+  includeAllOption = false,
+  className = "",
+}) => {
+  const [products, setProducts] = useState([]);
 
-useEffect(() => {
+  useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/products');
+        const response = await axios.get(`${serverUrl}/api/products`);
         setProducts(response.data);
       } catch (error) {
-        console.error('Error fetching products:', error);
-        console.log('Error details:', error.response);
+        console.error("Error fetching products:", error);
+        console.log("Error details:", error.response);
       }
     };
 
     fetchProducts();
-}, []);
+  }, []);
 
-return (
+  return (
     <select
       value={value}
       onChange={onChange}

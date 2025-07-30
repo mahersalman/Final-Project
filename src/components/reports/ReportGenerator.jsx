@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import ReportDisplay from './ReportDisplay';
+import React, { useState, useEffect, useMemo } from "react";
+import axios from "axios";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import ReportDisplay from "./ReportDisplay";
+import serverUrl from "config/api";
 
 const ReportGenerator = () => {
   const [employees, setEmployees] = useState([]);
@@ -10,7 +11,7 @@ const ReportGenerator = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedStation, setSelectedStation] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [reportData, setReportData] = useState(null);
   const [reportType, setReportType] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -20,21 +21,21 @@ const ReportGenerator = () => {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/employees');
+        const response = await axios.get(`${serverUrl}/api/employees`);
         setEmployees(response.data);
       } catch (error) {
-        console.error('Error fetching employees:', error);
-        setError('Failed to fetch employees');
+        console.error("Error fetching employees:", error);
+        setError("Failed to fetch employees");
       }
     };
 
     const fetchStations = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/stations');
+        const response = await axios.get(`${serverUrl}/api/stations`);
         setStations(response.data);
       } catch (error) {
-        console.error('Error fetching stations:', error);
-        setError('Failed to fetch stations');
+        console.error("Error fetching stations:", error);
+        setError("Failed to fetch stations");
       }
     };
 
@@ -43,9 +44,10 @@ const ReportGenerator = () => {
   }, []);
 
   const filteredEmployees = useMemo(() => {
-    return employees.filter(emp =>
-      emp.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.last_name.toLowerCase().includes(searchQuery.toLowerCase())
+    return employees.filter(
+      (emp) =>
+        emp.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        emp.last_name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [employees, searchQuery]);
 
@@ -69,7 +71,7 @@ const ReportGenerator = () => {
 
   const handleGenerateReport = async () => {
     if (!selectedStation) {
-      alert('Please select a station before generating the report.');
+      alert("Please select a station before generating the report.");
       return;
     }
 
@@ -77,24 +79,27 @@ const ReportGenerator = () => {
     setError(null);
 
     try {
-      const params = new URLSearchParams({ station: selectedStation.station_name });
-      if (selectedDate) params.append('date', selectedDate.toISOString());
-      if (selectedEmployee) params.append('employee', selectedEmployee.person_id);
+      const params = new URLSearchParams({
+        station: selectedStation.station_name,
+      });
+      if (selectedDate) params.append("date", selectedDate.toISOString());
+      if (selectedEmployee)
+        params.append("employee", selectedEmployee.person_id);
 
-      const response = await axios.get(`http://localhost:5001/api/report?${params}`);
+      const response = await axios.get(`${serverUrl}/api/report?${params}`);
       setReportData(response.data);
 
       if (selectedDate) {
-        setReportType('daily');
+        setReportType("daily");
       } else if (selectedEmployee) {
-        setReportType('monthlyEmployee');
+        setReportType("monthlyEmployee");
       } else {
-        setReportType('monthly');
+        setReportType("monthly");
       }
       setShowReportModal(true);
     } catch (error) {
-      console.error('Error generating report:', error);
-      setError('Failed to generate report. Please try again.');
+      console.error("Error generating report:", error);
+      setError("Failed to generate report. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -106,13 +111,13 @@ const ReportGenerator = () => {
     let csvContent = "data:text/csv;charset=utf-8,";
 
     // Add headers
-    if (reportType === 'daily') {
+    if (reportType === "daily") {
       csvContent += "Category,Count\n";
       csvContent += `Good Valves,${reportData.goodValves}\n`;
       csvContent += `Invalid Valves,${reportData.invalidValves}\n`;
     } else {
       csvContent += "Date,Good Valves,Invalid Valves\n";
-      reportData.forEach(item => {
+      reportData.forEach((item) => {
         csvContent += `${item._id},${item.goodValves},${item.invalidValves}\n`;
       });
     }
@@ -120,7 +125,10 @@ const ReportGenerator = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `report_${reportType}_${new Date().toISOString()}.csv`);
+    link.setAttribute(
+      "download",
+      `report_${reportType}_${new Date().toISOString()}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -128,19 +136,25 @@ const ReportGenerator = () => {
 
   return (
     <div className="bg-white p-4 md:p-6 rounded-lg shadow-md max-w-3xl mx-auto h-full md:h-auto overflow-y-auto">
-      <h2 className="text-xl md:text-2xl font-bold mb-4 text-center">יצירת דוח</h2>
-      
+      <h2 className="text-xl md:text-2xl font-bold mb-4 text-center">
+        יצירת דוח
+      </h2>
+
       <div className="mb-4">
         <label className="block mb-2 font-semibold">בחר תחנה (חובה)</label>
         <select
-          value={selectedStation ? selectedStation._id : ''}
-          onChange={(e) => handleStationChange(stations.find(s => s._id === e.target.value))}
+          value={selectedStation ? selectedStation._id : ""}
+          onChange={(e) =>
+            handleStationChange(stations.find((s) => s._id === e.target.value))
+          }
           className="w-full p-2 border rounded"
           required
         >
           <option value="">בחר תחנה</option>
           {stations.map((station) => (
-            <option key={station._id} value={station._id}>{station.station_name}</option>
+            <option key={station._id} value={station._id}>
+              {station.station_name}
+            </option>
           ))}
         </select>
       </div>
@@ -175,8 +189,8 @@ const ReportGenerator = () => {
                   onClick={() => handleEmployeeSelect(emp)}
                   className={`cursor-pointer p-2 md:p-3 rounded transition duration-150 ease-in-out ${
                     selectedEmployee && selectedEmployee._id === emp._id
-                      ? 'bg-[#246B35] text-white'
-                      : 'hover:bg-gray-100'
+                      ? "bg-[#246B35] text-white"
+                      : "hover:bg-gray-100"
                   }`}
                 >
                   {emp.first_name} {emp.last_name}
@@ -188,7 +202,9 @@ const ReportGenerator = () => {
       </div>
 
       <div className="mb-4">
-        <label className="block mb-2 font-semibold">בחר תאריך (אופציונלי)</label>
+        <label className="block mb-2 font-semibold">
+          בחר תאריך (אופציונלי)
+        </label>
         <DatePicker
           selected={selectedDate}
           onChange={(date) => {
@@ -205,9 +221,21 @@ const ReportGenerator = () => {
       <div className="mt-4 p-3 md:p-4 bg-gray-100 rounded-lg text-sm md:text-base">
         <h3 className="font-semibold mb-2">תנאי הדוח הנוכחי:</h3>
         <ul className="list-disc list-inside">
-          <li>תחנה: {selectedStation ? selectedStation.station_name : 'לא נבחרה'}</li>
-          <li>עובד: {selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : 'לא נבחר'}</li>
-          <li>תאריך: {selectedDate ? selectedDate.toLocaleDateString('he-IL') : 'לא נבחר'}</li>
+          <li>
+            תחנה: {selectedStation ? selectedStation.station_name : "לא נבחרה"}
+          </li>
+          <li>
+            עובד:{" "}
+            {selectedEmployee
+              ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}`
+              : "לא נבחר"}
+          </li>
+          <li>
+            תאריך:{" "}
+            {selectedDate
+              ? selectedDate.toLocaleDateString("he-IL")
+              : "לא נבחר"}
+          </li>
         </ul>
       </div>
 
@@ -215,12 +243,12 @@ const ReportGenerator = () => {
         onClick={handleGenerateReport}
         className={`mt-4 w-full font-bold py-2 px-4 rounded transition duration-150 ease-in-out text-sm md:text-base ${
           selectedStation
-            ? 'bg-[#1F6231] hover:bg-[#309d49] text-white'
-            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            ? "bg-[#1F6231] hover:bg-[#309d49] text-white"
+            : "bg-gray-300 text-gray-500 cursor-not-allowed"
         }`}
         disabled={!selectedStation || loading}
       >
-        {loading ? 'מייצר דוח...' : 'יצירת דוח'}
+        {loading ? "מייצר דוח..." : "יצירת דוח"}
       </button>
 
       {error && <p className="text-red-500 mt-2">{error}</p>}
@@ -233,7 +261,11 @@ const ReportGenerator = () => {
               reportType={reportType}
               station={selectedStation.station_name}
               date={selectedDate}
-              employee={selectedEmployee ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}` : null}
+              employee={
+                selectedEmployee
+                  ? `${selectedEmployee.first_name} ${selectedEmployee.last_name}`
+                  : null
+              }
             />
             <div className="mt-4 flex justify-between">
               <button

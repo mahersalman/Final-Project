@@ -1,7 +1,6 @@
-import React from 'react';
 import Navbar from "../components/Navbar";
 import DateTime from "../components/DateTime";
-import UpdatesCards from '../components/UpdatesCards';
+import UpdatesCards from "../components/UpdatesCards";
 
 const HomePage = () => {
   return (
