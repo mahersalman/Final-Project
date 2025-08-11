@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const Qualification = require("../models/Qualification");
-const Person = require("../models/Person");
+const Qualification = require("../models/qualification");
+const Person = require("../models/person");
 
 // Get all qualifications
 router.get("/qualifications", async (req, res) => {

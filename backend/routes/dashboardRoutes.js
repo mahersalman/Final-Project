@@ -1,9 +1,9 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-const Person = require("../models/Person");
-const Station = require("../models/Station");
-const Assignment = require("../models/Assignment");
+const Person = require("../models/person");
+const Station = require("../models/station");
+const Assignment = require("../models/assignment");
 
 // Route for dashboard data
 router.get("/dashboard-data", async (req, res) => {

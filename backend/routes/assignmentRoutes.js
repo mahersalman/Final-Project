@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-const Assignment = require("../models/Assignment");
+const Assignment = require("../models/assignment");
 
 // GET assignments for a specific date
 router.get("/assignments", async (req, res) => {

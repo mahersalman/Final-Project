@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const Person = require("../models/Person");
-const Qualification = require("../models/Qualification");
+const Person = require("../models/person");
+const Qualification = require("../models/qualification");
 const {
   getTopEmployeesForStation,
   getAllSortedEmployeesForStation,
   geneticAlgorithm,
 } = require("../geneticAlgorithm.js");
-const Station = require("../models/Station");
+const Station = require("../models/station");
 
 // Get all employees
 router.get("/employees", async (req, res) => {

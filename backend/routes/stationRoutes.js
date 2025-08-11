@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const Station = require("../models/Station");
-const Product = require("../models/Product");
-const WorkingStation = require("../models/WorkingStation");
+const Station = require("../models/station");
+const Product = require("../models/product");
+const WorkingStation = require("../models/workingStation");
 
 // Get all stations
 router.get("/stations", async (req, res) => {
