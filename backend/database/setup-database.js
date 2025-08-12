@@ -8,22 +8,24 @@ const Qualification = require("../models/qualification");
 const Product = require("../models/product");
 const Assignment = require("../models/assignment");
 const User = require("../models/User");
+const Department = require("../models/department");
 
 const {
-  sampleUsers, // <-- add this
+  sampleUsers,
   samplePersons,
   sampleStations,
   sampleWorkingStations,
   sampleProducts,
   sampleQualifications,
   sampleAssignments,
-} = require("./sampledata"); // make sure sampledata exports sampleUsers
+  DEPARTMENTS, // import here
+} = require("./seedData");
 
 async function setupDatabase() {
   try {
     await connectToDatabase();
 
-    // Clear existing data (dev-only)
+    // Clear collections
     await Promise.all([
       User.deleteMany({}),
       Person.deleteMany({}),
@@ -32,10 +34,11 @@ async function setupDatabase() {
       Qualification.deleteMany({}),
       Product.deleteMany({}),
       Assignment.deleteMany({}),
+      Department.deleteMany({}), // <-- clear departments
     ]);
     console.log("🧹 Cleared existing data");
 
-    // Insert seed data
+    // Insert seeds
     await User.insertMany(sampleUsers);
     console.log("✅ Users inserted");
 
@@ -57,7 +60,11 @@ async function setupDatabase() {
     await Assignment.insertMany(sampleAssignments);
     console.log("✅ Assignments inserted");
 
-    // Counts
+    // Insert departments from array
+    await Department.insertMany(DEPARTMENTS.map((name) => ({ name })));
+    console.log("✅ Departments inserted");
+
+    // Count log
     const [
       usersCnt,
       personsCnt,
@@ -66,6 +73,7 @@ async function setupDatabase() {
       productsCnt,
       qualsCnt,
       assignsCnt,
+      depsCnt,
     ] = await Promise.all([
       User.countDocuments(),
       Person.countDocuments(),
@@ -74,6 +82,7 @@ async function setupDatabase() {
       Product.countDocuments(),
       Qualification.countDocuments(),
       Assignment.countDocuments(),
+      Department.countDocuments(),
     ]);
 
     console.log("\n🎉 Database setup complete!");
@@ -84,6 +93,7 @@ async function setupDatabase() {
     console.log(`- products (${productsCnt})`);
     console.log(`- qualifications (${qualsCnt})`);
     console.log(`- assignments (${assignsCnt})`);
+    console.log(`- departments (${depsCnt})`);
   } catch (error) {
     console.error("Error setting up database:", error);
   } finally {
@@ -93,13 +103,3 @@ async function setupDatabase() {
 }
 
 setupDatabase();
-
-module.exports = {
-  Person,
-  Station,
-  WorkingStation,
-  Qualification,
-  Product,
-  Assignment,
-  User,
-};
