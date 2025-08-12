@@ -1,3 +1,6 @@
+import React from "react";
+import useFilterParams from "../Hooks/useFilterParams";
+
 const departments = [
   "הרכבות 1",
   "הרכבות 2",
@@ -13,16 +16,25 @@ const DepartmentDropdown = ({
   includeAllOption = false,
   className = "",
 }) => {
+  const { department, setDepartment } = useFilterParams();
+  const val = value ?? department;
+
+  const handle = (e) => {
+    const v = e.target.value;
+    if (onChange) onChange(e);
+    else setDepartment(v); // updates URL
+  };
+
   return (
     <select
-      value={value}
-      onChange={onChange}
+      value={val}
+      onChange={handle}
       className={`border rounded ${className}`}
     >
       {includeAllOption && <option value="all">כל המחלקות</option>}
-      {departments.map((dept) => (
-        <option key={dept} value={dept}>
-          {dept}
+      {departments.map((d) => (
+        <option key={d} value={d}>
+          {d}
         </option>
       ))}
     </select>
