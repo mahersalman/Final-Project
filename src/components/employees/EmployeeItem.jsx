@@ -92,79 +92,99 @@ const EmployeeItem = () => {
     return <div className="text-center p-4 text-red-500">Error: {error}</div>;
 
   return (
-    <div className="flex flex-col lg:flex-row p-4 sm:p-6 bg-gray-100 min-h-screen">
-      <div className="w-full lg:w-1/3 xl:w-1/4 mb-6 lg:mb-0">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4">עובדים</h1>
+    <div className="p-4 sm:p-6 bg-gray-100 min-h-screen">
+      {/* Title */}
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-right">עובדים</h1>
 
-        {/* Mobile toggle */}
-        <button
-          className="lg:hidden mb-4 inline-flex items-center gap-2 px-3 py-2 rounded border bg-white"
-          onClick={() => setMobileFiltersOpen((v) => !v)}
-        >
-          <FiFilter /> סינון
-        </button>
+      {/* Mobile filter toggle */}
+      <button
+        className="lg:hidden mb-4 inline-flex items-center gap-2 px-3 py-2 rounded border bg-white"
+        onClick={() => setMobileFiltersOpen((v) => !v)}
+      >
+        <FiFilter /> סינון
+      </button>
 
-        <div
-          className={`${
-            mobileFiltersOpen ? "block" : "hidden"
-          } lg:block bg-white p-3 rounded shadow-sm`}
-        >
-          <h2 className="font-semibold mb-3">סינון עובדים</h2>
+      {/* Full-width filter bar */}
+      <div
+        className={`${
+          mobileFiltersOpen ? "block" : "hidden"
+        } lg:block bg-white p-3 rounded shadow-sm mb-6`}
+      >
+        <h2 className="font-semibold mb-3 text-right">סינון עובדים</h2>
+        <div className="flex flex-col lg:flex-row lg:items-end gap-3">
+          <div className="flex-1">
+            <label className="block mb-1 text-sm text-right">לפי מחלקה</label>
+            <DepartmentDropdown includeAllOption className="w-full p-2" />
+          </div>
+          <div className="flex-1">
+            <label className="block mb-1 text-sm text-right">לפי סטטוס</label>
+            <StatusDropdown includeAllOption className="w-full p-2" />
+          </div>
+          <div className="flex-1">
+            <label className="block mb-1 text-sm text-right">לפי שם עובד</label>
+            <NameSearch className="w-full" />
+          </div>
+          <div className="flex-none">
+            <button
+              onClick={clearAll}
+              className="w-full lg:w-auto bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded"
+            >
+              נקה סינון
+            </button>
+          </div>
+          <div className="flex-none">
+            <button
+              onClick={exportToExcel}
+              className="w-full lg:w-auto flex items-center justify-center bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
+            >
+              <FaFileExcel className="mr-2" />
+              ייצא ל-Excel
+            </button>
+          </div>
+        </div>
+      </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-end gap-3">
-            <div className="flex-1">
-              <label className="block mb-1 text-sm">לפי מחלקה</label>
-              <DepartmentDropdown includeAllOption className="w-full p-2" />
-            </div>
-            <div className="flex-1">
-              <label className="block mb-1 text-sm">לפי סטטוס</label>
-              <StatusDropdown includeAllOption className="w-full p-2" />
-            </div>
-            <div className="flex-1">
-              <label className="block mb-1 text-sm">לפי שם עובד</label>
-              <NameSearch className="w-full" />
-            </div>
-            <div className="flex-none">
+      {/* Main content grid — force LTR so col placement is reliable */}
+      <div
+        className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto"
+        dir="ltr"
+      >
+        {/* LEFT: EmployeeCard spans cols 1-2 */}
+        <div dir="rtl" className="lg:col-span-2 lg:col-start-1">
+          <div className=" rounded-lg shadow p-4 h-full">
+            <EmployeeCard
+              employee={selectedEmployee}
+              onUpdateEmployee={handleUpdateEmployee}
+            />
+          </div>
+        </div>
+
+        {/* RIGHT: EmployeeList pinned to col 3 */}
+        <div dir="rtl" className="lg:col-span-1 lg:col-start-3">
+          <div className="min-w-[260px] bg-white rounded-lg shadow">
+            <EmployeeList
+              filteredEmployees={filteredEmployees}
+              selectedEmployee={selectedEmployee}
+              setSelectedEmployee={setSelectedEmployee}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Big centered CTA at the bottom */}
+      <div className="sticky bottom-0 left-0 right-0 mt-6">
+        <div className="max-w-7xl mx-auto px-4 pb-4">
+          <div className="bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-xl shadow border p-3">
+            <div className="flex justify-center">
               <button
-                onClick={clearAll}
-                className="w-full lg:w-auto bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded"
+                onClick={() => setShowAddForm(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center text-lg font-bold px-8 py-3 rounded-lg bg-[#1F6231] hover:bg-[#309d49] text-white transition"
               >
-                נקה סינון
+                הוספת עובד חדש
               </button>
             </div>
           </div>
         </div>
-
-        <div className="h-[50vh] lg:h-[calc(80vh-200px)] min-w-[250px] mt-4">
-          <EmployeeList
-            filteredEmployees={filteredEmployees}
-            selectedEmployee={selectedEmployee}
-            setSelectedEmployee={setSelectedEmployee}
-          />
-        </div>
-
-        <button
-          onClick={exportToExcel}
-          className="mt-4 w-full flex items-center justify-center bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
-        >
-          <FaFileExcel className="mr-2" />
-          ייצא ל-Excel
-        </button>
-      </div>
-
-      <div className="hidden lg:block lg:w-8" />
-
-      <div className="w-full lg:w-2/3 xl:w-3/4 mt-6 lg:mt-0">
-        <EmployeeCard
-          employee={selectedEmployee}
-          onUpdateEmployee={handleUpdateEmployee}
-        />
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="mt-4 w-full lg:w-auto bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
-        >
-          הוספת עובד חדש
-        </button>
       </div>
 
       {showAddForm && (
