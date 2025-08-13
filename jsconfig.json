@@ -5,7 +5,8 @@
       "@config/*": ["config/*"],
       "@components/*": ["components/*"],
       "@pages/*": ["pages/*"],
-      "@constants/*": ["constants/*"]
+      "@constants/*": ["constants/*"],
+      "@hooks/*": ["hooks/*"]
     }
   }
 }
