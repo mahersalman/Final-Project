@@ -1,5 +1,5 @@
 import React from "react";
-import useFilterParams from "../Hooks/useFilterParams";
+import useFilterParams from "../hooks/useFilterParams";
 
 const statuses = ["פעיל", "לא פעיל", "מוקפא"];
 

@@ -1,14 +1,6 @@
 import React from "react";
-import useFilterParams from "../Hooks/useFilterParams";
-
-const departments = [
-  "הרכבות 1",
-  "הרכבות 2",
-  "טלפוניה",
-  "הרכבות אלקטרוניקה",
-  "פלקס",
-  "פרמהספט",
-];
+import useFilterParams from "../hooks/useFilterParams";
+import { DEPARTMENTS } from "constants/departments";
 
 const DepartmentDropdown = ({
   value,
@@ -32,7 +24,7 @@ const DepartmentDropdown = ({
       className={`border rounded ${className}`}
     >
       {includeAllOption && <option value="all">כל המחלקות</option>}
-      {departments.map((d) => (
+      {DEPARTMENTS.map((d) => (
         <option key={d} value={d}>
           {d}
         </option>

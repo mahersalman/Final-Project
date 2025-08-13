@@ -10,7 +10,7 @@ import { FiFilter } from "react-icons/fi";
 import * as XLSX from "xlsx";
 import axios from "axios";
 import serverUrl from "config/api";
-import useFilterParams from "../../Hooks/useFilterParams";
+import useFilterParams from "../../hooks/useFilterParams";
 
 const EmployeeItem = () => {
   const [employees, setEmployees] = useState([]);

@@ -4,6 +4,25 @@ const router = express.Router();
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { requireAuth, requireAdmin } = require("../middleware/auth");
+
+// --- Current user ---
+router.get("/me", requireAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select(
+      "username isAdmin department"
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({
+      id: user._id,
+      username: user.username,
+      isAdmin: user.isAdmin,
+      department: user.department,
+    });
+  } catch (e) {
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // Login route
 router.post("/login", async (req, res) => {
@@ -123,39 +142,42 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-// Optional: Register route for creating new users
-router.post("/register", async (req, res) => {
+// --- Admin-only Register ---
+router.post("/register", requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { username, password, isAdmin = false, department } = req.body;
+    const {
+      username,
+      password,
+      isAdmin = false,
+      department,
+      email,
+      phone,
+    } = req.body;
 
-    if (!username || !password) {
+    if (!username || !password)
       return res
         .status(400)
         .json({ message: "Username and password are required" });
-    }
 
-    if (password.length < 6) {
+    if (password.length < 6)
       return res
         .status(400)
         .json({ message: "Password must be at least 6 characters long" });
-    }
 
-    // Check if user already exists
     const existingUser = await User.findOne({ username });
-    if (existingUser) {
+    if (existingUser)
       return res.status(400).json({ message: "Username already exists" });
-    }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
       username,
       password: hashedPassword,
-      isAdmin,
+      isAdmin: !!isAdmin,
       department,
+      email,
+      phone,
     });
-
     await newUser.save();
 
     res.status(201).json({
