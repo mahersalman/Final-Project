@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { connectToDatabase } = require("./atlas-connection");
+const bcrypt = require("bcrypt");
 
 const Person = require("../models/person");
 const Station = require("../models/station");
@@ -34,12 +35,24 @@ async function setupDatabase() {
       Qualification.deleteMany({}),
       Product.deleteMany({}),
       Assignment.deleteMany({}),
-      Department.deleteMany({}), // <-- clear departments
+      Department.deleteMany({}),
     ]);
     console.log("🧹 Cleared existing data");
 
-    // Insert seeds
-    await User.insertMany(sampleUsers);
+    // Hash all user passwords before insert
+    const hashedUsers = await Promise.all(
+      sampleUsers.map(async (u) => {
+        // if already bcrypt ($2…) keep as is (allows pre-hashed values in seedData)
+        if (typeof u.password === "string" && u.password.startsWith("$2")) {
+          return u;
+        }
+        const password = u.password;
+        const passwordHash = await bcrypt.hash(password, 10);
+        return { ...u, password: passwordHash };
+      })
+    );
+
+    await User.insertMany(hashedUsers);
     console.log("✅ Users inserted");
 
     await Person.insertMany(samplePersons);
