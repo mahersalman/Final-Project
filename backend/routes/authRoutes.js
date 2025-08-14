@@ -5,7 +5,7 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
-
+const { send_mail } = require("../services/emailService");
 // GET /api/me
 router.get("/me", requireAuth, async (req, res) => {
   try {
@@ -77,11 +77,13 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
   try {
     const {
       username,
+      first_name,
+      last_name,
       password,
       isAdmin = false,
       department,
       email,
-      phone,
+      phone_number,
     } = req.body || {};
     if (!username || !password)
       return res
@@ -99,20 +101,38 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await User.create({
       username,
+      first_name,
+      last_name,
       password: hashedPassword,
       isAdmin: !!isAdmin,
       department,
       email,
-      phone,
+      phone_number,
     });
+
+    // ✅ Send welcome email after success
+    send_mail({
+      subject: "Welcome to MigdalOr!",
+      username,
+      password,
+      first_name,
+      last_name,
+      email,
+      department,
+      phone_number,
+    }).catch((err) => console.error("Email send error:", err));
 
     res.status(201).json({
       message: "User created successfully",
       user: {
         id: newUser._id,
         username: newUser.username,
+        first_name: newUser.first_name,
+        last_name: newUser.last_name,
         isAdmin: newUser.isAdmin,
         department: newUser.department,
+        email: newUser.email,
+        phone: newUser.phone,
       },
     });
   } catch (err) {

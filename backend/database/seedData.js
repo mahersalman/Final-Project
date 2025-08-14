@@ -1,19 +1,46 @@
 // ---- USERS (unchanged) ------------------------------------------------------
+
 const sampleUsers = [
-  { username: "admin", password: "admin", isAdmin: true, department: "מערכת" },
+  {
+    username: "admin",
+    password: "admin",
+    first_name: "System",
+    last_name: "Admin",
+    isAdmin: true,
+    department: "מערכת",
+    email: "admin@example.com",
+    phone_number: "+972500000001",
+  },
   {
     username: "manager",
     password: "secret123",
+    first_name: "Moshe",
+    last_name: "Manager",
     isAdmin: false,
     department: "ייצור",
+    email: "manager@example.com",
+    phone_number: "+972500000002",
   },
   {
     username: "user1",
     password: "secret123",
+    first_name: "Dana",
+    last_name: "Tester",
     isAdmin: false,
     department: "בדיקה",
+    email: "user1@example.com",
+    phone_number: "+972500000003",
   },
-  { username: "user2", password: "secret123", isAdmin: false, department: "" },
+  {
+    username: "user2",
+    password: "secret123",
+    first_name: "Avi",
+    last_name: "Cohen",
+    isAdmin: false,
+    department: "",
+    email: "user2@example.com",
+    phone_number: "+972500000004",
+  },
 ];
 
 // ---- CANONICAL DEPARTMENTS USED ACROSS DATA ---------------------------------

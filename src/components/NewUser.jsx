@@ -6,11 +6,13 @@ import { DEPARTMENTS } from "constants/departments";
 export default function NewUser() {
   const [newUser, setNewUser] = useState({
     username: "",
+    first_name: "",
+    last_name: "",
     password: "",
     isAdmin: false,
     department: "",
     email: "",
-    phone: "",
+    phone_number: "",
   });
   const [msg, setMsg] = useState("");
 
@@ -31,11 +33,13 @@ export default function NewUser() {
       // optional: clear
       setNewUser({
         username: "",
+        first_name: "",
+        last_name: "",
         password: "",
         isAdmin: false,
         department: "",
         email: "",
-        phone: "",
+        phone_number: "",
       });
     } catch (err) {
       setMsg(err.response?.data?.message || "שגיאה ביצירת משתמש");
@@ -55,6 +59,28 @@ export default function NewUser() {
         <input
           id="username"
           value={newUser.username}
+          onChange={handleInputChange}
+          required
+          className="w-full border rounded p-2"
+        />
+      </label>
+
+      <label className="block">
+        <span className="block mb-1">First Name</span>
+        <input
+          id="first_name"
+          value={newUser.first_name}
+          onChange={handleInputChange}
+          required
+          className="w-full border rounded p-2"
+        />
+      </label>
+
+      <label className="block">
+        <span className="block mb-1">Last Name</span>
+        <input
+          id="last_name"
+          value={newUser.last_name}
           onChange={handleInputChange}
           required
           className="w-full border rounded p-2"
@@ -109,8 +135,8 @@ export default function NewUser() {
         <span className="block mb-1">Phone</span>
         <input
           type="tel"
-          id="phone"
-          value={newUser.phone}
+          id="phone_number"
+          value={newUser.phone_number}
           onChange={handleInputChange}
           className="w-full border rounded p-2"
         />
