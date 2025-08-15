@@ -1,65 +1,63 @@
 const brevo = require("@getbrevo/brevo");
 require("dotenv").config();
 
-const register_content = (data) => {
-  let content = "";
-  for (const [key, value] of Object.entries(data)) {
-    if (key === "subject") continue; // skip subject
-    content += `<div style="margin-bottom:6px;"><strong>${key}:</strong> ${value}</div>`;
-  }
-  return content;
-};
-
-const send_mail = async (data) => {
+function renderKeyValues(data, { exclude = [] } = {}) {
+  return Object.entries(data)
+    .filter(([k]) => !exclude.includes(k))
+    .map(
+      ([k, v]) =>
+        `<div style="margin-bottom:6px;">
+           <strong>${k}:</strong> ${v ?? ""}
+         </div>`
+    )
+    .join("");
+}
+async function sendEmail({
+  subject,
+  to, // { email, name } | Array<{ email, name }>
+  html, // optional: full HTML string (wins if provided)
+  keyValues, // optional: object to render as rows
+  excludeKeys = [], // keys to exclude when rendering keyValues
+  title = "Migdalor", // email title header
+}) {
   const sender_mail = process.env.BREVO_SENDER_MAIL;
-  const brevo_api_key = process.env.BREVO_API_KEY;
-  if (!brevo_api_key || !sender_mail) {
-    console.error(
-      "❌ brevo API-key or sender mail environment variable is not set"
-    );
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!sender_mail || !apiKey) {
+    console.error("❌ Missing BREVO credentials");
     return;
   }
+
+  const recipients = Array.isArray(to) ? to : [to];
+
   const emailAPI = new brevo.TransactionalEmailsApi();
-  emailAPI.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, brevo_api_key);
+  emailAPI.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
 
   const msg = new brevo.SendSmtpEmail();
-  const content = register_content(data);
-  msg.subject = data.subject;
+  msg.subject = subject;
+  msg.sender = { name: "MigdalOr", email: sender_mail };
+  msg.to = recipients;
+
+  const content =
+    html ??
+    `
+      <div style="padding:10px;border:1px solid #ccc;border-radius:5px;">
+        ${renderKeyValues(keyValues || {}, { exclude: excludeKeys })}
+      </div>
+    `;
+
   msg.htmlContent = `
     <html>
-      <body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
-        <h1>Hello from Brevo</h1>
-        <div style="padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-          ${content}
-        </div>
+      <body style="font-family:Arial,sans-serif;line-height:1.6;color:#333">
+        <h1>${title}</h1>
+        ${content}
       </body>
     </html>
   `;
-  msg.sender = { name: "MigdalOr", email: sender_mail }; // must be a verified domain
-  msg.to = [
-    { name: `${data.first_name} ${data.last_name}`, email: data.email },
-  ];
 
-  try {
-    const res = await emailAPI.sendTransacEmail(msg);
-    console.log("✅ Sent:", JSON.stringify(res.body));
-  } catch (err) {
-    console.error("❌ Brevo error:", err?.body || err);
-  }
-};
+  const res = await emailAPI.sendTransacEmail(msg);
+  return res?.body;
+}
 
-/*
-const data = {
-  subject: "Welcome to MigdalOr!",
-  username: "maher_s",
-  password: "securePass123",
-  first_name: "Maher",
-  last_name: "Salman",
-  email: "mahersal001@gmail.com",
-  phone_number: "+972501234567",
-};
-
-*/
 module.exports = {
-  send_mail,
+  sendEmail,
 };

@@ -14,6 +14,7 @@ const qualificationRoutes = require("./routes/qualificationRoutes.js");
 const assignmentRoutes = require("./routes/assignmentRoutes.js");
 const dashboardRoutes = require("./routes/dashboardRoutes.js");
 const reportRoutes = require("./routes/reportRoutes.js");
+const userRoutes = require("./routes/userRoutes.js");
 
 const app = express();
 const port = process.env.PORT || 5001;
@@ -41,6 +42,7 @@ async function startServer() {
     app.use("/api", assignmentRoutes);
     app.use("/api", dashboardRoutes);
     app.use("/api", reportRoutes);
+    app.use("/api", userRoutes);
 
     // Health check endpoint
     app.get("/health", (req, res) => {

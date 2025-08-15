@@ -10,8 +10,13 @@ const userSchema = new mongoose.Schema(
     department: { type: String, required: false },
     email: { type: String },
     phone_number: { type: String },
+
+    // reset fields
+    passwordResetTokenHash: { type: String, index: true },
+    passwordResetExpires: { type: Date },
+    passwordChangedAt: { type: Date },
   },
-  { collection: "user" }
+  { collection: "user", timestamps: true }
 );
 
 module.exports = mongoose.models.User || mongoose.model("User", userSchema);

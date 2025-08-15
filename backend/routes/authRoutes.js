@@ -1,30 +1,21 @@
-// routes/authRoutes.js - Improved version of your existing code
 const express = require("express");
+require("dotenv").config();
 const router = express.Router();
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
-const { send_mail } = require("../services/emailService");
-// GET /api/me
-router.get("/me", requireAuth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select(
-      "username isAdmin department email phone"
-    );
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({
-      id: user._id,
-      username: user.username,
-      isAdmin: user.isAdmin,
-      department: user.department,
-      email: user.email,
-      phone: user.phone,
-    });
-  } catch {
-    res.status(500).json({ message: "Server error" });
-  }
-});
+const { sendEmail } = require("../services/emailService");
+const { forgotLimiter } = require("../middleware/rateLimit");
+const { okGeneric } = require("../utils/genericResponse");
+const {
+  generateResetToken,
+  hashResetToken,
+  expiryDateFromNow,
+  verifyResetToken,
+  RESET_TOKEN_TTL_MINUTES,
+} = require("../utils/passwordReset");
+const APP_BASE_URL = process.env.APP_BASE_URL || "http://localhost:3000";
 
 // Login route
 router.post("/login", async (req, res) => {
@@ -111,7 +102,7 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
     });
 
     // ✅ Send welcome email after success
-    send_mail({
+    sendEmail({
       subject: "Welcome to MigdalOr!",
       username,
       password,
@@ -140,10 +131,102 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
     res.status(500).json({ message: "Server error during registration" });
   }
 });
-// Forgot password route
-router.post("/forgot-password", async (req, res) => {});
 
-// Reset password route
-router.post("/reset-password", async (req, res) => {});
+/**
+ * POST /auth/forgot-password
+ * body: { email?: string, username?: string }
+ * Always respond generically to avoid user enumeration.
+ */
+router.post("/forgot-password", forgotLimiter, async (req, res) => {
+  try {
+    const { email, username } = req.body || {};
+    const query = email
+      ? { email: email.trim().toLowerCase() }
+      : username
+      ? { username: username.trim() }
+      : null;
+
+    if (!query) return okGeneric(res);
+
+    const user = await User.findOne(query);
+    if (!user || !user.email) {
+      // Respond generically
+      return okGeneric(res);
+    }
+
+    // Generate token
+    const raw = generateResetToken();
+    const tokenHash = await hashResetToken(raw);
+
+    user.passwordResetTokenHash = tokenHash;
+    user.passwordResetExpires = expiryDateFromNow(RESET_TOKEN_TTL_MINUTES);
+    await user.save();
+
+    // Construct reset link
+    const link = `${APP_BASE_URL}/reset-password?token=${encodeURIComponent(
+      raw
+    )}&uid=${user._id}`;
+
+    // Send email (fire-and-forget)
+    sendEmail({
+      toEmail: user.email,
+      toName: user.first_name,
+      link,
+    }).catch((e) => console.error("reset email error:", e?.body || e));
+
+    return okGeneric(res);
+  } catch (e) {
+    console.error("/forgot-password error:", e);
+    return okGeneric(res);
+  }
+});
+
+/**
+ * POST /auth/reset-password
+ * body: { uid: string, token: string, newPassword: string }
+ */
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { uid, token, newPassword } = req.body || {};
+    if (!uid || !token || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Missing uid, token or password" });
+    }
+    if (newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters long" });
+    }
+
+    const user = await User.findById(uid);
+    if (!user || !user.passwordResetTokenHash || !user.passwordResetExpires) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+    if (user.passwordResetExpires.getTime() < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    const ok = await verifyResetToken(token, user.passwordResetTokenHash);
+    if (!ok) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    // Rotate: clear token so it can't be reused
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.passwordChangedAt = new Date();
+    user.passwordResetTokenHash = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    // (Optional) Invalidate server sessions / JWTs issued before passwordChangedAt
+    // You can add a JWT claim check: token.iat > passwordChangedAt
+
+    return res.json({ message: "Password updated successfully" });
+  } catch (e) {
+    console.error("reset-password error:", e);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 module.exports = router;
