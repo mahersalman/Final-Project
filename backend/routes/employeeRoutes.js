@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const Person = require("../models/person");
+const User = require("../models/User");
 const Qualification = require("../models/qualification");
 const {
   getTopEmployeesForStation,
@@ -13,7 +13,7 @@ const Station = require("../models/station");
 router.get("/employees", async (req, res) => {
   try {
     console.log("Fetching employees...");
-    const employees = await Person.find({});
+    const employees = await User.find({});
     console.log("Employees found:", employees.length);
     console.log("Sample employee:", employees[0]);
     res.json(employees);
@@ -29,7 +29,7 @@ router.get("/employees", async (req, res) => {
 // Create new employee
 router.post("/employees", async (req, res) => {
   try {
-    const newPerson = new Person({
+    const newPerson = new User({
       person_id: req.body.person_id,
       first_name: req.body.first_name,
       last_name: req.body.last_name,
@@ -60,7 +60,7 @@ router.put("/employees/:employeeId", async (req, res) => {
     if (department) updateObj.department = department;
     if (status) updateObj.status = status;
 
-    const updatedEmployee = await Person.findOneAndUpdate(
+    const updatedEmployee = await User.findOneAndUpdate(
       { person_id: req.params.employeeId },
       { $set: updateObj },
       { new: true }
@@ -92,7 +92,7 @@ router.get("/top-employees/:stationName/:count", async (req, res) => {
   try {
     const { stationName, count } = req.params;
     const station = await Station.findOne({ station_name: stationName });
-    const employees = await Person.find({});
+    const employees = await User.find({});
     const qualifications = await Qualification.find({
       station_name: stationName,
     });
@@ -123,7 +123,7 @@ router.get("/sorted-employees/:stationName", async (req, res) => {
       return res.status(404).json({ message: "Station not found" });
     }
 
-    const employees = await Person.find({});
+    const employees = await User.find({});
     const qualifications = await Qualification.find({
       station_name: stationName,
     });
@@ -161,7 +161,7 @@ router.get("/employees-with-qualifications/:stationName", async (req, res) => {
     const personIds = qualifications.map((qual) => qual.person_id);
 
     // Fetch the corresponding persons
-    const employees = await Person.find({ person_id: { $in: personIds } });
+    const employees = await User.find({ person_id: { $in: personIds } });
 
     console.log(
       `Found ${employees.length} qualified employees for station ${stationName}`
@@ -199,7 +199,7 @@ router.post("/assign-employees", async (req, res) => {
     const { selectedStations, selectedEmployees } = req.body;
 
     // Fetch full employee data
-    const employees = await Person.find({ _id: { $in: selectedEmployees } });
+    const employees = await User.find({ _id: { $in: selectedEmployees } });
 
     // Fetch full station data
     const stations = await Station.find({ _id: { $in: selectedStations } });

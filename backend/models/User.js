@@ -1,17 +1,19 @@
 const mongoose = require("mongoose");
-
 const userSchema = new mongoose.Schema(
   {
+    person_id: { type: String, index: true },
     username: { type: String, required: true, unique: true, trim: true },
-    password: { type: String, required: true },
-    first_name: { type: String, required: true },
-    last_name: { type: String, required: true },
+    password: { type: String, required: true }, // bcrypt hash
+    first_name: { type: String, required: true, trim: true },
+    last_name: { type: String, required: true, trim: true },
+    email: { type: String, trim: true, lowercase: true, index: true },
+    phone: { type: String, trim: true },
+    department: { type: String, trim: true },
+    role: { type: String, trim: true },
+    status: { type: String, trim: true },
     isAdmin: { type: Boolean, default: false },
-    department: { type: String, required: false },
-    email: { type: String },
-    phone_number: { type: String },
 
-    // reset fields
+    // Password reset
     passwordResetTokenHash: { type: String, index: true },
     passwordResetExpires: { type: Date },
     passwordChangedAt: { type: Date },

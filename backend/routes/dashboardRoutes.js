@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-const Person = require("../models/person");
+const User = require("../models/User");
 const Station = require("../models/station");
 const Assignment = require("../models/assignment");
 
@@ -11,11 +11,11 @@ router.get("/dashboard-data", async (req, res) => {
     console.log("Received request for dashboard data");
 
     // Calculate active workers (status === 'פעיל')
-    const activeWorkers = await Person.countDocuments({ status: "פעיל" });
+    const activeWorkers = await User.countDocuments({ status: "פעיל" });
     console.log("Active workers:", activeWorkers);
 
     // Calculate total workers and inactive workers
-    const totalWorkers = await Person.countDocuments();
+    const totalWorkers = await User.countDocuments();
     const inactiveWorkers = totalWorkers - activeWorkers;
     console.log("Inactive workers:", inactiveWorkers);
 

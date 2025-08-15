@@ -2,9 +2,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const { requireAuth, requireAdmin } = require("../middleware/auth");
-const { send_mail } = require("../services/emailService");
+const { requireAuth } = require("../middleware/auth");
 
 // GET /api/me
 router.get("/me", requireAuth, async (req, res) => {

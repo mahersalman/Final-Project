@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const { connectToDatabase } = require("./atlas-connection");
 const bcrypt = require("bcrypt");
 
-const Person = require("../models/person");
 const Station = require("../models/station");
 const WorkingStation = require("../models/workingStation");
 const Qualification = require("../models/qualification");
@@ -13,7 +12,6 @@ const Department = require("../models/department");
 
 const {
   sampleUsers,
-  samplePersons,
   sampleStations,
   sampleWorkingStations,
   sampleProducts,
@@ -29,7 +27,6 @@ async function setupDatabase() {
     // Clear collections
     await Promise.all([
       User.deleteMany({}),
-      Person.deleteMany({}),
       Station.deleteMany({}),
       WorkingStation.deleteMany({}),
       Qualification.deleteMany({}),
@@ -55,9 +52,6 @@ async function setupDatabase() {
     await User.insertMany(hashedUsers);
     console.log("✅ Users inserted");
 
-    await Person.insertMany(samplePersons);
-    console.log("✅ Persons inserted");
-
     await Station.insertMany(sampleStations);
     console.log("✅ Stations inserted");
 
@@ -80,7 +74,6 @@ async function setupDatabase() {
     // Count log
     const [
       usersCnt,
-      personsCnt,
       stationsCnt,
       wssCnt,
       productsCnt,
@@ -89,7 +82,6 @@ async function setupDatabase() {
       depsCnt,
     ] = await Promise.all([
       User.countDocuments(),
-      Person.countDocuments(),
       Station.countDocuments(),
       WorkingStation.countDocuments(),
       Product.countDocuments(),
@@ -100,7 +92,6 @@ async function setupDatabase() {
 
     console.log("\n🎉 Database setup complete!");
     console.log(`- users (${usersCnt})`);
-    console.log(`- persons (${personsCnt})`);
     console.log(`- stations (${stationsCnt})`);
     console.log(`- workingstations (${wssCnt})`);
     console.log(`- products (${productsCnt})`);

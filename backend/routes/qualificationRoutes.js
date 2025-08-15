@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Qualification = require("../models/qualification");
-const Person = require("../models/person");
+const User = require("../models/User");
 
 // Get all qualifications
 router.get("/qualifications", async (req, res) => {
@@ -51,7 +51,7 @@ router.put("/qualifications", async (req, res) => {
     });
 
     // First, find the person by their person_id
-    const person = await Person.findOne({ person_id });
+    const person = await User.findOne({ person_id });
     if (!person) {
       return res.status(404).json({ message: "Person not found" });
     }

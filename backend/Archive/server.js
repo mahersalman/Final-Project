@@ -22,7 +22,7 @@ app.use(express.json());
 
 // Import routes after initializing app
 const userRouter = require("../routes/authRoutes.js");
-const Station = require("../models/Station.js");
+const Station = require("../models/station.js");
 const Person = require("../models/Person.js");
 const Qualification = require("../models/Qualification.js");
 const Product = require("../models/Product.js");
