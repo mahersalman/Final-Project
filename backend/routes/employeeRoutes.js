@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
+const { requireAuth, requireAdmin } = require("../middleware/auth");
 const User = require("../models/User");
 const Qualification = require("../models/qualification");
+const bcrypt = require("bcrypt");
+
 const {
   getTopEmployeesForStation,
   getAllSortedEmployeesForStation,
@@ -51,41 +54,83 @@ router.get("/employees", async (req, res) => {
 // });
 
 // Update employee data
-router.put("/employees/:employeeId", async (req, res) => {
-  try {
-    const { department, status } = req.body;
+router.put(
+  "/employees/:employeeId",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const {
+        username,
+        first_name,
+        last_name,
+        email,
+        phone,
+        department,
+        role,
+        status,
+        isAdmin,
+      } = req.body;
 
-    // Prepare the update object
-    const updateObj = {};
-    if (department) updateObj.department = department;
-    if (status) updateObj.status = status;
+      const updateObj = {};
+      if (username !== undefined) updateObj.username = username;
+      if (first_name !== undefined) updateObj.first_name = first_name;
+      if (last_name !== undefined) updateObj.last_name = last_name;
+      if (email !== undefined) updateObj.email = email;
+      if (phone !== undefined) updateObj.phone = phone;
+      if (department !== undefined) updateObj.department = department;
+      if (role !== undefined) updateObj.role = role;
+      if (status !== undefined) updateObj.status = status;
+      if (isAdmin !== undefined) updateObj.isAdmin = !!isAdmin;
 
-    const updatedEmployee = await User.findOneAndUpdate(
-      { person_id: req.params.employeeId },
-      { $set: updateObj },
-      { new: true }
-    );
-
-    if (!updatedEmployee) {
-      return res.status(404).json({ message: "Employee not found" });
-    }
-
-    // If status has changed, log the change
-    if (status && updatedEmployee.status !== status) {
-      console.log(
-        `Employee ${updatedEmployee.person_id} status changed from ${updatedEmployee.status} to ${status}`
+      const updated = await User.findOneAndUpdate(
+        { person_id: req.params.employeeId },
+        { $set: updateObj },
+        { new: true }
       );
-    }
 
-    res.json(updatedEmployee);
-  } catch (error) {
-    console.error("Error updating employee:", error);
-    res.status(500).json({
-      message: "Error updating employee",
-      error: error.message,
-    });
+      if (!updated)
+        return res.status(404).json({ message: "Employee not found" });
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      res
+        .status(500)
+        .json({ message: "Error updating employee", error: error.message });
+    }
   }
-});
+);
+
+// Admin: change a user's password by person_id
+router.put(
+  "/employees/:personId/password",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const { newPassword } = req.body || {};
+      if (!newPassword || newPassword.length < 6) {
+        return res
+          .status(400)
+          .json({ message: "Password must be at least 6 characters long" });
+      }
+
+      const user = await User.findOne({ person_id: req.params.personId });
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      user.password = await bcrypt.hash(newPassword, 10);
+      user.passwordChangedAt = new Date();
+      await user.save();
+
+      return res.json({ message: "Password updated" });
+    } catch (e) {
+      console.error("admin password update error:", e);
+      return res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
+module.exports = router;
 
 // Get top employees for a station
 router.get("/top-employees/:stationName/:count", async (req, res) => {

@@ -1,128 +1,323 @@
+// components/EditEmployeeForm.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import DepartmentDropdown from "../DepartmentDropdown";
 import StationSelector from "../StationSelector";
 import StatusDropdown from "./StatusDropdown";
 import serverUrl from "config/api";
+import { useMe } from "../../hooks/useMe";
 
 const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
-  const [department, setDepartment] = useState(employee.department);
-  const [status, setStatus] = useState(employee.status || "פעיל"); // Default to 'פעיל' if status is not set
+  const { me } = useMe();
+  const isAdmin = !!me?.isAdmin;
+
+  // Profile fields
+  const [person_id] = useState(employee.person_id); // immutable key
+  const [username, setUsername] = useState(
+    employee.username || employee.person_id || ""
+  );
+  const [first_name, setFirstName] = useState(employee.first_name || "");
+  const [last_name, setLastName] = useState(employee.last_name || "");
+  const [email, setEmail] = useState(employee.email || "");
+  const [phone, setPhone] = useState(employee.phone || "");
+  const [department, setDepartment] = useState(employee.department || "");
+  const [role, setRole] = useState(employee.role || "Employee");
+  const [status, setStatus] = useState(employee.status || "פעיל");
+  const [isAdminFlag, setIsAdminFlag] = useState(!!employee.isAdmin);
+
+  // Password (admin can set)
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Qualifications
   const [stations, setStations] = useState([]);
   const [stationAverages, setStationAverages] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [initialLoaded, setInitialLoaded] = useState(false);
+
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
 
   useEffect(() => {
     const fetchQualifications = async () => {
       try {
-        setIsLoading(true);
-        const response = await axios.get(
-          `${serverUrl}/api/qualifications/${employee.person_id}`
+        const { data } = await axios.get(
+          `${serverUrl}/api/qualifications/${person_id}`
         );
-        const qualifications = response.data;
-        setStations(qualifications.map((q) => q.station_name));
-        const averages = {};
-        qualifications.forEach((q) => {
-          averages[q.station_name] = q.avg;
+        setStations(data.map((q) => q.station_name));
+        const avgMap = {};
+        data.forEach((q) => {
+          avgMap[q.station_name] = q.avg;
         });
-        setStationAverages(averages);
+        setStationAverages(avgMap);
       } catch (err) {
         console.error("Error fetching qualifications:", err);
-        setError("Failed to fetch employee qualifications");
       } finally {
-        setIsLoading(false);
+        setInitialLoaded(true);
       }
     };
     fetchQualifications();
-  }, [employee.person_id]);
+  }, [person_id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    setSuccessMessage(null);
-    try {
-      await axios.put(`${serverUrl}/api/employees/${employee.person_id}`, {
-        department,
-        status, // Include status in the update
-      });
+    if (!isAdmin) return; // double guard
 
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        setMsg({
+          type: "error",
+          text: "הסיסמה חייבת להיות באורך 6 תווים לפחות.",
+        });
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setMsg({ type: "error", text: "הסיסמאות אינן תואמות." });
+        return;
+      }
+    }
+
+    setBusy(true);
+    setMsg(null);
+
+    try {
+      // 1) Update user profile fields (extend your employees route to accept these)
+      const updatePayload = {
+        username,
+        first_name,
+        last_name,
+        email,
+        phone,
+        department,
+        role,
+        status,
+        isAdmin: isAdminFlag,
+      };
+
+      const { data: updatedUser } = await axios.put(
+        `${serverUrl}/api/employees/${person_id}`,
+        updatePayload
+      );
+
+      // 2) Update or upsert qualifications
       const qualificationPromises = Object.entries(stationAverages).map(
-        ([station, avg]) =>
+        ([station_name, avg]) =>
           axios.put(`${serverUrl}/api/qualifications`, {
-            person_id: employee.person_id,
-            station_name: station,
+            person_id,
+            station_name,
             avg: parseFloat(avg),
           })
       );
       await Promise.all(qualificationPromises);
 
-      setSuccessMessage("Employee data updated successfully");
-      onUpdateEmployee({ ...employee, department, stations, status }); // Include status in the updated employee object
+      // 3) Admin password set
+      if (newPassword) {
+        await axios.put(`${serverUrl}/api/employees/${person_id}/password`, {
+          newPassword,
+        });
+      }
+      setMsg({ type: "success", text: "עודכן בהצלחה" });
+      onUpdateEmployee?.({
+        ...employee,
+        username,
+        first_name,
+        last_name,
+        email,
+        phone,
+        department,
+        role,
+        status,
+        isAdmin: isAdminFlag,
+      });
 
-      setTimeout(() => {
-        onClose();
-      }, 1500);
+      setTimeout(() => onClose?.(), 1200);
     } catch (error) {
       console.error("Error updating employee:", error);
-      setError(`Error updating employee data: ${error.message}`);
+      setMsg({
+        type: "error",
+        text: error?.response?.data?.message || "שגיאה בעדכון",
+      });
     } finally {
-      setIsLoading(false);
+      setBusy(false);
     }
   };
 
-  if (isLoading && !successMessage)
+  if (!initialLoaded) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-white p-6 rounded-lg">
-          <p className="text-xl">Loading...</p>
-        </div>
+      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+        <div className="bg-white p-6 rounded-lg">Loading…</div>
       </div>
     );
+  }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-white w-full max-w-md rounded-lg shadow-lg flex flex-col max-h-[90vh]">
-        <h2 className="text-xl sm:text-2xl font-bold p-4 sm:p-6 pb-0">
+    <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+      <div className="bg-white w-full max-w-xl rounded-lg shadow-lg flex flex-col max-h-[90vh]">
+        <h2 className="text-xl sm:text-2xl font-bold p-6 pb-0">
           עריכת פרטי עובד
         </h2>
-        <div className="overflow-y-auto flex-grow p-4 sm:p-6 pt-4">
-          {error && <div className="text-red-500 mb-4">{error}</div>}
-          {successMessage && (
-            <div className="text-green-500 mb-4">{successMessage}</div>
+
+        <div className="overflow-y-auto flex-grow p-6 pt-4">
+          {msg && (
+            <div
+              className={`mb-3 rounded px-3 py-2 text-sm ${
+                msg.type === "success"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {msg.text}
+            </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-4">
+
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+          >
+            {/* person_id (read only) */}
+            <label className="block">
+              <span className="block mb-1 text-sm font-medium">person_id</span>
+              <input
+                className="w-full border p-2 rounded text-sm bg-gray-100"
+                value={person_id}
+                readOnly
+              />
+            </label>
+
+            {/* username */}
+            <label className="block">
+              <span className="block mb-1 text-sm font-medium">Username</span>
+              <input
+                className="w-full border p-2 rounded text-sm"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={!isAdmin}
+              />
+            </label>
+
+            <label className="block">
+              <span className="block mb-1 text-sm font-medium">First name</span>
+              <input
+                className="w-full border p-2 rounded text-sm"
+                value={first_name}
+                onChange={(e) => setFirstName(e.target.value)}
+                disabled={!isAdmin}
+              />
+            </label>
+
+            <label className="block">
+              <span className="block mb-1 text-sm font-medium">Last name</span>
+              <input
+                className="w-full border p-2 rounded text-sm"
+                value={last_name}
+                onChange={(e) => setLastName(e.target.value)}
+                disabled={!isAdmin}
+              />
+            </label>
+
+            <label className="block sm:col-span-2">
+              <span className="block mb-1 text-sm font-medium">Email</span>
+              <input
+                type="email"
+                className="w-full border p-2 rounded text-sm"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={!isAdmin}
+              />
+            </label>
+
+            <label className="block">
+              <span className="block mb-1 text-sm font-medium">Phone</span>
+              <input
+                className="w-full border p-2 rounded text-sm"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={!isAdmin}
+              />
+            </label>
+
             <div>
-              <label className="block mb-1 text-sm font-medium">
-                בחירת מחלקה:
-              </label>
+              <span className="block mb-1 text-sm font-medium">מחלקה</span>
               <DepartmentDropdown
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="w-full p-2 text-sm"
+                disabled={!isAdmin}
               />
             </div>
+
+            <label className="block">
+              <span className="block mb-1 text-sm font-medium">תפקיד</span>
+              <input
+                className="w-full border p-2 rounded text-sm"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                disabled={!isAdmin}
+              />
+            </label>
+
             <div>
-              <label className="block mb-1 text-sm font-medium">
-                סטטוס עובד:
-              </label>
+              <span className="block mb-1 text-sm font-medium">סטטוס</span>
               <StatusDropdown
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full p-2 text-sm"
+                disabled={!isAdmin}
               />
             </div>
-            <StationSelector
-              selectedStations={stations}
-              onChange={setStations}
-              onAverageChange={setStationAverages}
-              initialAverages={stationAverages}
-            />
+
+            <label className="inline-flex items-center gap-2 mt-6">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                checked={isAdminFlag}
+                onChange={(e) => setIsAdminFlag(e.target.checked)}
+                disabled={!isAdmin}
+              />
+              <span className="text-sm">Admin</span>
+            </label>
+
+            {/* Qualifications */}
+            <div className="sm:col-span-2">
+              <StationSelector
+                selectedStations={stations}
+                onChange={setStations}
+                onAverageChange={setStationAverages}
+                initialAverages={stationAverages}
+                disabled={!isAdmin}
+              />
+            </div>
+
+            {/* Password (admin only) */}
+            {isAdmin && (
+              <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <span className="block mb-1 text-sm font-medium">
+                    New Password (admin)
+                  </span>
+                  <input
+                    type="password"
+                    className="w-full border p-2 rounded text-sm"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <span className="block mb-1 text-sm font-medium">
+                    Confirm Password
+                  </span>
+                  <input
+                    type="password"
+                    className="w-full border p-2 rounded text-sm"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
           </form>
         </div>
-        <div className="p-4 sm:p-6 pt-0 border-t">
+
+        <div className="p-6 pt-0 border-t">
           <div className="flex justify-between">
             <button
               type="button"
@@ -131,13 +326,15 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
             >
               ביטול
             </button>
-            <button
-              onClick={handleSubmit}
-              className="px-4 py-2 rounded bg-[#1F6231] text-white text-sm font-medium hover:bg-[#309d49] transition-colors"
-              disabled={isLoading}
-            >
-              {isLoading ? "מעדכן..." : "עדכן פרטים"}
-            </button>
+            {isAdmin && (
+              <button
+                onClick={handleSubmit}
+                className="px-4 py-2 rounded bg-[#1F6231] text-white text-sm font-medium hover:bg-[#309d49] transition-colors"
+                disabled={busy}
+              >
+                {busy ? "מעדכן..." : "עדכן פרטים"}
+              </button>
+            )}
           </div>
         </div>
       </div>

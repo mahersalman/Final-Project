@@ -11,6 +11,7 @@ import * as XLSX from "xlsx";
 import axios from "axios";
 import serverUrl from "config/api";
 import useFilterParams from "../../hooks/useFilterParams";
+import { useMe } from "hooks/useMe"; // add this if not already imported
 
 const EmployeeItem = () => {
   const [employees, setEmployees] = useState([]);
@@ -19,6 +20,7 @@ const EmployeeItem = () => {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { me, loading } = useMe();
 
   // read-only here; controls update them themselves
   const { department, status, name, clearAll } = useFilterParams();
@@ -172,20 +174,22 @@ const EmployeeItem = () => {
       </div>
 
       {/* Big centered CTA at the bottom */}
-      <div className="sticky bottom-0 left-0 right-0 mt-6">
-        <div className="max-w-7xl mx-auto px-4 pb-4">
-          <div className="bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-xl shadow border p-3">
-            <div className="flex justify-center">
-              <button
-                onClick={() => setShowAddForm(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center text-lg font-bold px-8 py-3 rounded-lg bg-[#1F6231] hover:bg-[#309d49] text-white transition"
-              >
-                הוספת עובד חדש
-              </button>
+      {me?.isAdmin && (
+        <div className="sticky bottom-0 left-0 right-0 mt-6">
+          <div className="max-w-7xl mx-auto px-4 pb-4">
+            <div className="bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/70 rounded-xl shadow border p-3">
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setShowAddForm(true)}
+                  className="w-full sm:w-auto inline-flex items-center justify-center text-lg font-bold px-8 py-3 rounded-lg bg-[#1F6231] hover:bg-[#309d49] text-white transition"
+                >
+                  הוספת עובד חדש
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {showAddForm && (
         <AddUserEmployeeForm

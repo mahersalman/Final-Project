@@ -29,6 +29,16 @@ export default function AddUserEmployeeForm({ onClose, onCreated }) {
     setForm((p) => ({ ...p, [id]: type === "checkbox" ? checked : value }));
   };
 
+  const generatePassword = (length = 12) => {
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+
+    let pwd = "";
+    for (let i = 0; i < length; i++) {
+      pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pwd;
+  };
   const submit = async (e) => {
     e.preventDefault();
     setMsg("");
@@ -100,9 +110,7 @@ export default function AddUserEmployeeForm({ onClose, onCreated }) {
               />
             </label>
             <label className="block">
-              <span className="block mb-1 text-sm font-medium">
-                Username (אופציונלי)
-              </span>
+              <span className="block mb-1 text-sm font-medium">Username</span>
               <input
                 id="username"
                 value={form.username}
@@ -135,17 +143,25 @@ export default function AddUserEmployeeForm({ onClose, onCreated }) {
 
             {/* Account */}
             <label className="block">
-              <span className="block mb-1 text-sm font-medium">
-                Password (אופציונלי)
-              </span>
-              <input
-                type="password"
-                id="password"
-                value={form.password}
-                onChange={onChange}
-                placeholder="אם ריק — יווצר סיסמה זמנית"
-                className="w-full border p-2 rounded text-sm"
-              />
+              <span className="block mb-1 text-sm font-medium">Password</span>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  id="password"
+                  value={form.password}
+                  onChange={onChange}
+                  className="flex-grow border p-2 rounded text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((p) => ({ ...p, password: generatePassword(12) }))
+                  }
+                  className="px-3 py-2 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                >
+                  Generate
+                </button>
+              </div>
             </label>
             <label className="inline-flex items-center gap-2 mt-6">
               <input
