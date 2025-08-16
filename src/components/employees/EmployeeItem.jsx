@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import EmployeeCard from "./EmployeeCard";
-import AddEmployeeForm from "./AddEmployeeForm";
+import AddUserEmployeeForm from "./AddUserEmployeeForm";
 import DepartmentDropdown from "../DepartmentDropdown";
 import StatusDropdown from "../StatusDropdown";
 import NameSearch from "../NameSearch";
@@ -188,7 +188,7 @@ const EmployeeItem = () => {
       </div>
 
       {showAddForm && (
-        <AddEmployeeForm
+        <AddUserEmployeeForm
           onClose={() => setShowAddForm(false)}
           onAddEmployee={(e) =>
             setEmployees((prev) => [...prev, { ...e, id: prev.length + 1 }])

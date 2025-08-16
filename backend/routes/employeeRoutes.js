@@ -27,28 +27,28 @@ router.get("/employees", async (req, res) => {
 });
 
 // Create new employee
-router.post("/employees", async (req, res) => {
-  try {
-    const newPerson = new User({
-      person_id: req.body.person_id,
-      first_name: req.body.first_name,
-      last_name: req.body.last_name,
-      department: req.body.department,
-      status: req.body.status,
-      role: req.body.role || "Employee",
-    });
+// router.post("/employees", async (req, res) => {
+//   try {
+//     const newPerson = new User({
+//       person_id: req.body.person_id,
+//       first_name: req.body.first_name,
+//       last_name: req.body.last_name,
+//       department: req.body.department,
+//       status: req.body.status,
+//       role: req.body.role || "Employee",
+//     });
 
-    const savedPerson = await newPerson.save();
-    console.log("New person saved:", savedPerson);
-    res.status(201).json(savedPerson);
-  } catch (error) {
-    console.error("Error saving person:", error);
-    res.status(500).json({
-      message: "Error saving person",
-      error: error.message,
-    });
-  }
-});
+//     const savedPerson = await newPerson.save();
+//     console.log("New person saved:", savedPerson);
+//     res.status(201).json(savedPerson);
+//   } catch (error) {
+//     console.error("Error saving person:", error);
+//     res.status(500).json({
+//       message: "Error saving person",
+//       error: error.message,
+//     });
+//   }
+// });
 
 // Update employee data
 router.put("/employees/:employeeId", async (req, res) => {

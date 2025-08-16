@@ -68,37 +68,55 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
   try {
     const {
       username,
+      person_id,
       first_name,
       last_name,
-      password,
+      password, // optional; we can generate if missing
       isAdmin = false,
       department,
       email,
-      phone_number,
+      phone_number, // incoming legacy name
+      phone, // or new name
+      role = "Employee",
+      status = "פעיל",
     } = req.body || {};
-    if (!username || !password)
-      return res
-        .status(400)
-        .json({ message: "Username and password are required" });
-    if (password.length < 6)
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters long" });
 
-    const exists = await User.findOne({ username });
+    // username default = person_id if not given
+    const finalUsername = (username || person_id || "").trim();
+    if (!finalUsername) {
+      return res
+        .status(400)
+        .json({ message: "username or person_id is required" });
+    }
+
+    const exists = await User.findOne({ username: finalUsername });
     if (exists)
       return res.status(400).json({ message: "Username already exists" });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // require names
+    if (!first_name || !last_name) {
+      return res
+        .status(400)
+        .json({ message: "first_name and last_name are required" });
+    }
+
+    // password: use provided or generate a temp one
+    const tmp = require("crypto").randomBytes(8).toString("base64url"); // ~11 chars
+    const plainPassword = password && password.length >= 6 ? password : tmp;
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
     const newUser = await User.create({
-      username,
+      person_id: person_id || null,
+      username: finalUsername,
+      password: hashedPassword,
       first_name,
       last_name,
-      password: hashedPassword,
       isAdmin: !!isAdmin,
-      department,
-      email,
-      phone_number,
+      department: department || "",
+      email: email || "",
+      phone: phone ?? phone_number ?? "",
+      role,
+      status,
     });
 
     // ✅ Send welcome email after success
@@ -111,12 +129,14 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
       email,
       department,
       phone_number,
+      role,
     }).catch((err) => console.error("Email send error:", err));
 
     res.status(201).json({
       message: "User created successfully",
       user: {
         id: newUser._id,
+        person_id: newUser.person_id,
         username: newUser.username,
         first_name: newUser.first_name,
         last_name: newUser.last_name,
@@ -124,6 +144,8 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
         department: newUser.department,
         email: newUser.email,
         phone: newUser.phone,
+        role: newUser.role,
+        status: newUser.status,
       },
     });
   } catch (err) {
