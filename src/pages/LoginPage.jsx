@@ -8,7 +8,6 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [newPassword, setNewPassword] = useState("");
 
   const navigate = useNavigate();
 

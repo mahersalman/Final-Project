@@ -1,12 +1,18 @@
 // components/EditEmployeeForm.jsx
 import React, { useState, useEffect } from "react";
-import { http } from "../../api/http"; // ✅ use your configured axios instance
+import { http } from "../../api/http";
 import DepartmentDropdown from "../DepartmentDropdown";
 import StationSelector from "../StationSelector";
 import StatusDropdown from "./StatusDropdown";
 import { useMe } from "../../hooks/useMe";
 
-const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
+const EditEmployeeForm = ({
+  employee,
+  onClose,
+  onUpdateEmployee,
+  initialStations = [], // ✅ new
+  initialStationAverages = {}, // ✅ new
+}) => {
   const { me } = useMe();
   const isAdmin = !!me?.isAdmin;
 
@@ -28,35 +34,24 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Qualifications
-  const [stations, setStations] = useState([]);
-  const [stationAverages, setStationAverages] = useState({});
-  const [initialLoaded, setInitialLoaded] = useState(false);
+  // Qualifications (init from props instead of fetching)
+  const [stations, setStations] = useState(initialStations);
+  const [stationAverages, setStationAverages] = useState(
+    initialStationAverages
+  );
 
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
 
+  // If parent props change (e.g., after refetch), sync once
   useEffect(() => {
-    const fetchQualifications = async () => {
-      try {
-        // ✅ baseURL is already `${serverUrl}/api`
-        const { data } = await http.get(`/qualifications/${person_id}`);
-        setStations(data.map((q) => q.station_name));
-        const avgMap = {};
-        data.forEach((q) => (avgMap[q.station_name] = q.avg));
-        setStationAverages(avgMap);
-      } catch (err) {
-        console.error("Error fetching qualifications:", err);
-      } finally {
-        setInitialLoaded(true);
-      }
-    };
-    fetchQualifications();
-  }, [person_id]);
+    setStations(initialStations);
+    setStationAverages(initialStationAverages);
+  }, [initialStations, initialStationAverages]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isAdmin) return; // double guard
+    if (!isAdmin) return;
 
     if (newPassword) {
       if (newPassword.length < 6) {
@@ -76,7 +71,7 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
     setMsg(null);
 
     try {
-      // 1) Update user profile fields
+      // 1) Update profile
       const updatePayload = {
         username,
         first_name,
@@ -88,12 +83,10 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
         status,
         isAdmin: isAdminFlag,
       };
-
-      // ✅ uses token via interceptor
       await http.put(`/employees/${person_id}`, updatePayload);
 
       // 2) Upsert qualifications
-      const qualificationPromises = Object.entries(stationAverages).map(
+      const qualOps = Object.entries(stationAverages).map(
         ([station_name, avg]) =>
           http.put(`/qualifications`, {
             person_id,
@@ -101,9 +94,9 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
             avg: parseFloat(avg),
           })
       );
-      await Promise.all(qualificationPromises);
+      await Promise.all(qualOps);
 
-      // 3) Admin password set (optional)
+      // 3) Optional password set
       if (newPassword) {
         await http.put(`/employees/${person_id}/password`, { newPassword });
       }
@@ -133,14 +126,6 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
       setBusy(false);
     }
   };
-
-  if (!initialLoaded) {
-    return (
-      <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
-        <div className="bg-white p-6 rounded-lg">Loading…</div>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
@@ -269,7 +254,7 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
               <span className="text-sm">Admin</span>
             </label>
 
-            {/* Qualifications */}
+            {/* Qualifications editor (still editable for admins) */}
             <div className="sm:col-span-2">
               <StationSelector
                 selectedStations={stations}

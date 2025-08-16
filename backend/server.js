@@ -31,8 +31,8 @@ async function startServer() {
     console.log("✅ Database connected successfully");
 
     // Setup MQTT
-    setupMQTT();
-    console.log("✅ MQTT service initialized");
+    // setupMQTT();
+    // console.log("✅ MQTT service initialized");
 
     // Routes
     app.use("/api", authRoutes);
@@ -54,8 +54,7 @@ async function startServer() {
 
     // Start the server
     app.listen(port, () => {
-      console.log(`🚀 Server is running on port: ${port}`);
-      console.log(`📊 Health check: http://localhost:${port}/health`);
+      console.log(`🚀 Server is running`);
     });
   } catch (error) {
     console.error("❌ Failed to start server:", error);
