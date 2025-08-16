@@ -4,7 +4,6 @@ import { http } from "../api/http";
 export function useMe() {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
-  console.log(me);
   useEffect(() => {
     http
       .get("/me")

@@ -8,20 +8,13 @@ const Assignment = require("../models/assignment");
 // Route for dashboard data
 router.get("/dashboard-data", async (req, res) => {
   try {
-    console.log("Received request for dashboard data");
-
     // Calculate active workers (status === 'פעיל')
     const activeWorkers = await User.countDocuments({ status: "פעיל" });
-    console.log("Active workers:", activeWorkers);
-
     // Calculate total workers and inactive workers
     const totalWorkers = await User.countDocuments();
     const inactiveWorkers = totalWorkers - activeWorkers;
-    console.log("Inactive workers:", inactiveWorkers);
-
     // Calculate stations
     const totalStations = await Station.countDocuments();
-    console.log("Total stations:", totalStations);
 
     // For active and inactive stations, we'll keep the previous logic
     // Assuming a station is active if it has an assignment today
@@ -46,8 +39,6 @@ router.get("/dashboard-data", async (req, res) => {
       dailyDefects: 0, // Placeholder as before
       inactiveStations,
     };
-
-    console.log("Sending response:", responseData);
     res.json(responseData);
   } catch (error) {
     console.error("Error calculating dashboard data:", error);
@@ -90,7 +81,6 @@ router.get("/shluker-results", async (req, res) => {
       }
     });
 
-    console.log("Shluker results:", counterData);
     res.json(counterData);
   } catch (error) {
     console.error("Error fetching Shluker results:", error);

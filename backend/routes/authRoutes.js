@@ -7,7 +7,6 @@ const jwt = require("jsonwebtoken");
 const { requireAuth, requireAdmin } = require("../middleware/auth");
 const { sendEmail } = require("../services/emailService");
 const { forgotLimiter } = require("../middleware/rateLimit");
-const { okGeneric } = require("../utils/genericResponse");
 const {
   generateResetToken,
   hashResetToken,
@@ -120,16 +119,22 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
     });
 
     // ✅ Send welcome email after success
-    sendEmail({
+    await sendEmail({
       subject: "Welcome to MigdalOr!",
-      username,
-      password,
-      first_name,
-      last_name,
-      email,
-      department,
-      phone_number,
-      role,
+      to: { email, name: `${first_name} ${last_name}`.trim() || username },
+      keyValues: {
+        username,
+        password,
+        first_name,
+        last_name,
+        email,
+        department,
+        phone_number,
+        role,
+        status,
+      },
+      excludeKeys: [],
+      title: "Migdalor",
     }).catch((err) => console.error("Email send error:", err));
 
     res.status(201).json({
@@ -156,24 +161,23 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
 
 /**
  * POST /auth/forgot-password
- * body: { email?: string, username?: string }
+ * body: {  username?: string }
  * Always respond generically to avoid user enumeration.
  */
 router.post("/forgot-password", forgotLimiter, async (req, res) => {
   try {
-    const { email, username } = req.body || {};
-    const query = email
-      ? { email: email.trim().toLowerCase() }
-      : username
-      ? { username: username.trim() }
-      : null;
+    const { username } = req.body || {};
 
-    if (!query) return okGeneric(res);
+    if (!username)
+      return res.json({
+        message: "Missing username",
+      });
 
-    const user = await User.findOne(query);
-    if (!user || !user.email) {
-      // Respond generically
-      return okGeneric(res);
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.json({
+        message: "username doesnt exists.",
+      });
     }
 
     // Generate token
@@ -189,17 +193,25 @@ router.post("/forgot-password", forgotLimiter, async (req, res) => {
       raw
     )}&uid=${user._id}`;
 
-    // Send email (fire-and-forget)
     sendEmail({
-      toEmail: user.email,
-      toName: user.first_name,
-      link,
+      subject: "Reset Your PASSWORD",
+      to: {
+        email: user.email,
+        name: `${user.first_name} ${user.last_name}`.trim() || username,
+      },
+      keyValues: {
+        link,
+      },
     }).catch((e) => console.error("reset email error:", e?.body || e));
 
-    return okGeneric(res);
+    return res.json({
+      message: "a reset link has been sent to your email",
+    });
   } catch (e) {
     console.error("/forgot-password error:", e);
-    return okGeneric(res);
+    return res.json({
+      message: "Server Error - /forgot-password",
+    });
   }
 });
 

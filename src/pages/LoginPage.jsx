@@ -8,7 +8,6 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
 
   const navigate = useNavigate();
@@ -49,28 +48,8 @@ const LoginPage = () => {
         username,
       });
       setSuccess(response.data.message);
-      setIsResettingPassword(true);
     } catch (err) {
       console.error("Forgot password error:", err);
-      setError(err.response?.data?.message || "An error occurred");
-    }
-  };
-
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    try {
-      const response = await axios.post(`${serverUrl}/api/reset-password`, {
-        username,
-        newPassword,
-      });
-      setSuccess(response.data.message);
-      setIsResettingPassword(false);
-      setNewPassword("");
-    } catch (err) {
-      console.error("Reset password error:", err);
       setError(err.response?.data?.message || "An error occurred");
     }
   };
@@ -89,93 +68,55 @@ const LoginPage = () => {
         {success && (
           <p className="text-green-500 text-center mb-4">{success}</p>
         )}
-        {!isResettingPassword ? (
-          <form onSubmit={handleSubmit} className="flex flex-col items-center">
-            <div className="mb-4 w-full">
-              <label
-                htmlFor="username"
-                className="block text-gray-700 text-sm font-bold mb-2 text-center"
-              >
-                שם משתמש
-              </label>
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="הכנס את שם המשתמש שלך"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-            <div className="mb-6 w-full">
-              <label
-                htmlFor="password"
-                className="block text-gray-700 text-sm font-bold mb-2 text-center"
-              >
-                סיסמה
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="הכנס את הסיסמה שלך"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:bg-green-700 mb-4"
+        <form onSubmit={handleSubmit} className="flex flex-col items-center">
+          <div className="mb-4 w-full">
+            <label
+              htmlFor="username"
+              className="block text-gray-700 text-sm font-bold mb-2 text-center"
             >
-              התחברות
-            </button>
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              className="text-blue-500 hover:text-blue-700"
+              שם משתמש
+            </label>
+            <input
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="הכנס את שם המשתמש שלך"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              required
+            />
+          </div>
+          <div className="mb-6 w-full">
+            <label
+              htmlFor="password"
+              className="block text-gray-700 text-sm font-bold mb-2 text-center"
             >
-              שכחת סיסמה?
-            </button>
-          </form>
-        ) : (
-          <form
-            onSubmit={handleResetPassword}
-            className="flex flex-col items-center"
+              סיסמה
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="הכנס את הסיסמה שלך"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:bg-green-700 mb-4"
           >
-            <div className="mb-4 w-full">
-              <label
-                htmlFor="newPassword"
-                className="block text-gray-700 text-sm font-bold mb-2 text-center"
-              >
-                סיסמה חדשה
-              </label>
-              <input
-                type="password"
-                id="newPassword"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="הכנס סיסמה חדשה"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:bg-green-700 mb-4"
-            >
-              אפס סיסמה
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsResettingPassword(false)}
-              className="text-blue-500 hover:text-blue-700"
-            >
-              חזור להתחברות
-            </button>
-          </form>
-        )}
+            התחברות
+          </button>
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            className="text-blue-500 hover:text-blue-700"
+          >
+            שכחת סיסמה?
+          </button>
+        </form>
       </div>
     </div>
   );

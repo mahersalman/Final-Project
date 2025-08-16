@@ -1,10 +1,9 @@
 // components/EditEmployeeForm.jsx
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { http } from "../../api/http"; // ✅ use your configured axios instance
 import DepartmentDropdown from "../DepartmentDropdown";
 import StationSelector from "../StationSelector";
 import StatusDropdown from "./StatusDropdown";
-import serverUrl from "config/api";
 import { useMe } from "../../hooks/useMe";
 
 const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
@@ -12,7 +11,7 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
   const isAdmin = !!me?.isAdmin;
 
   // Profile fields
-  const [person_id] = useState(employee.person_id); // immutable key
+  const [person_id] = useState(employee.person_id);
   const [username, setUsername] = useState(
     employee.username || employee.person_id || ""
   );
@@ -40,14 +39,11 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
   useEffect(() => {
     const fetchQualifications = async () => {
       try {
-        const { data } = await axios.get(
-          `${serverUrl}/api/qualifications/${person_id}`
-        );
+        // ✅ baseURL is already `${serverUrl}/api`
+        const { data } = await http.get(`/qualifications/${person_id}`);
         setStations(data.map((q) => q.station_name));
         const avgMap = {};
-        data.forEach((q) => {
-          avgMap[q.station_name] = q.avg;
-        });
+        data.forEach((q) => (avgMap[q.station_name] = q.avg));
         setStationAverages(avgMap);
       } catch (err) {
         console.error("Error fetching qualifications:", err);
@@ -80,7 +76,7 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
     setMsg(null);
 
     try {
-      // 1) Update user profile fields (extend your employees route to accept these)
+      // 1) Update user profile fields
       const updatePayload = {
         username,
         first_name,
@@ -93,15 +89,13 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
         isAdmin: isAdminFlag,
       };
 
-      const { data: updatedUser } = await axios.put(
-        `${serverUrl}/api/employees/${person_id}`,
-        updatePayload
-      );
+      // ✅ uses token via interceptor
+      await http.put(`/employees/${person_id}`, updatePayload);
 
-      // 2) Update or upsert qualifications
+      // 2) Upsert qualifications
       const qualificationPromises = Object.entries(stationAverages).map(
         ([station_name, avg]) =>
-          axios.put(`${serverUrl}/api/qualifications`, {
+          http.put(`/qualifications`, {
             person_id,
             station_name,
             avg: parseFloat(avg),
@@ -109,12 +103,11 @@ const EditEmployeeForm = ({ employee, onClose, onUpdateEmployee }) => {
       );
       await Promise.all(qualificationPromises);
 
-      // 3) Admin password set
+      // 3) Admin password set (optional)
       if (newPassword) {
-        await axios.put(`${serverUrl}/api/employees/${person_id}/password`, {
-          newPassword,
-        });
+        await http.put(`/employees/${person_id}/password`, { newPassword });
       }
+
       setMsg({ type: "success", text: "עודכן בהצלחה" });
       onUpdateEmployee?.({
         ...employee,

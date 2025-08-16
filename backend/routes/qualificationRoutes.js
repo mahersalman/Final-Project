@@ -44,11 +44,6 @@ router.post("/qualifications", async (req, res) => {
 router.put("/qualifications", async (req, res) => {
   try {
     const { person_id, station_name, avg } = req.body;
-    console.log("Received qualification update request:", {
-      person_id,
-      station_name,
-      avg,
-    });
 
     // First, find the person by their person_id
     const person = await User.findOne({ person_id });
@@ -63,7 +58,6 @@ router.put("/qualifications", async (req, res) => {
       { new: true, upsert: true }
     );
 
-    console.log("Qualification updated:", qualification);
     res.json(qualification);
   } catch (error) {
     console.error("Error updating qualification:", error);
@@ -77,14 +71,9 @@ router.put("/qualifications", async (req, res) => {
 // Get employee qualifications
 router.get("/qualifications/:employeeId", async (req, res) => {
   try {
-    console.log(
-      "Fetching qualifications for employeeId:",
-      req.params.employeeId
-    );
     const qualifications = await Qualification.find({
       person_id: req.params.employeeId,
     });
-    console.log("Qualifications found:", qualifications);
     res.json(qualifications);
   } catch (error) {
     console.error("Error fetching qualifications:", error);

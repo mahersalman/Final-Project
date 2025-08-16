@@ -115,13 +115,6 @@ async function generateDailyReport(date, employee) {
   const endDate = new Date(startDate);
   endDate.setDate(endDate.getDate() + 1);
 
-  console.log(
-    `Generating report for date: ${startDate.toISOString()} to ${endDate.toISOString()}`
-  );
-  if (employee) {
-    console.log(`Filtering for employee: ${employee}`);
-  }
-
   let query = {
     timestamp: { $gte: startDate, $lt: endDate },
   };
@@ -131,17 +124,12 @@ async function generateDailyReport(date, employee) {
     .find(query)
     .toArray();
 
-  console.log(`Total messages found: ${messages.length}`);
-
   let goodValves = 0;
   let invalidValves = 0;
 
   messages.forEach((msg) => {
     try {
       const parsedMessage = JSON.parse(msg.message);
-
-      console.log("Parsed message:", parsedMessage);
-      console.log("Message User ID:", parsedMessage["User ID"]);
 
       if (employee && parsedMessage["User ID"] !== employee) {
         return; // Skip this message if it's not for the specified employee
@@ -156,10 +144,6 @@ async function generateDailyReport(date, employee) {
       console.error("Error parsing message:", parseError);
     }
   });
-
-  console.log(
-    `Report results - Good Valves: ${goodValves}, Invalid Valves: ${invalidValves}`
-  );
 
   return { goodValves, invalidValves };
 }

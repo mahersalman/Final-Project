@@ -15,10 +15,7 @@ const Station = require("../models/station");
 // Get all employees
 router.get("/employees", async (req, res) => {
   try {
-    console.log("Fetching employees...");
     const employees = await User.find({});
-    console.log("Employees found:", employees.length);
-    console.log("Sample employee:", employees[0]);
     res.json(employees);
   } catch (error) {
     console.error("Error fetching employees:", error);
@@ -28,30 +25,6 @@ router.get("/employees", async (req, res) => {
     });
   }
 });
-
-// Create new employee
-// router.post("/employees", async (req, res) => {
-//   try {
-//     const newPerson = new User({
-//       person_id: req.body.person_id,
-//       first_name: req.body.first_name,
-//       last_name: req.body.last_name,
-//       department: req.body.department,
-//       status: req.body.status,
-//       role: req.body.role || "Employee",
-//     });
-
-//     const savedPerson = await newPerson.save();
-//     console.log("New person saved:", savedPerson);
-//     res.status(201).json(savedPerson);
-//   } catch (error) {
-//     console.error("Error saving person:", error);
-//     res.status(500).json({
-//       message: "Error saving person",
-//       error: error.message,
-//     });
-//   }
-// });
 
 // Update employee data
 router.put(
@@ -193,9 +166,6 @@ router.get("/sorted-employees/:stationName", async (req, res) => {
 router.get("/employees-with-qualifications/:stationName", async (req, res) => {
   try {
     const stationName = req.params.stationName;
-    console.log(
-      `Fetching employees with qualifications for station: ${stationName}`
-    );
 
     // Find all qualifications for the given station
     const qualifications = await Qualification.find({
@@ -207,10 +177,6 @@ router.get("/employees-with-qualifications/:stationName", async (req, res) => {
 
     // Fetch the corresponding persons
     const employees = await User.find({ person_id: { $in: personIds } });
-
-    console.log(
-      `Found ${employees.length} qualified employees for station ${stationName}`
-    );
 
     // Combine employee data with their qualification
     const employeesWithQualifications = employees.map((employee) => {

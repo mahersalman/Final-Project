@@ -7,10 +7,7 @@ const WorkingStation = require("../models/workingStation");
 // Get all stations
 router.get("/stations", async (req, res) => {
   try {
-    console.log("Attempting to fetch stations...");
     const stations = await Station.find({});
-    console.log("Fetched stations:", stations);
-    console.log("Number of stations found:", stations.length);
     res.json(stations);
   } catch (error) {
     console.error("Error fetching stations:", error);
@@ -24,10 +21,7 @@ router.get("/stations", async (req, res) => {
 // Get all products
 router.get("/products", async (req, res) => {
   try {
-    console.log("Attempting to fetch products...");
     const products = await Product.find({}).select("product_name");
-    console.log("Fetched products:", products);
-    console.log("Number of products found:", products.length);
     res.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -42,7 +36,6 @@ router.get("/products", async (req, res) => {
 router.get("/workstations/:stationName", async (req, res) => {
   try {
     const { stationName } = req.params;
-    console.log(`Fetching workstations for station: ${stationName}`);
 
     const station = await Station.findOne({ station_name: stationName });
     if (!station) {
@@ -52,9 +45,6 @@ router.get("/workstations/:stationName", async (req, res) => {
     const workstations = await WorkingStation.find({
       station_name: stationName,
     });
-    console.log(
-      `Found ${workstations.length} workstations for station ${stationName}`
-    );
 
     res.json(workstations);
   } catch (error) {
