@@ -8,18 +8,22 @@ const { requireAuth } = require("../middleware/auth");
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select(
-      "username isAdmin department email phone"
+      "person_id username first_name last_name email phone department role status isAdmin"
     );
     if (!user) return res.status(404).json({ message: "User not found" });
+
     res.json({
       id: user._id,
+      person_id: user.person_id,
       username: user.username,
       first_name: user.first_name,
       last_name: user.last_name,
-      isAdmin: user.isAdmin,
-      department: user.department,
       email: user.email,
-      phone_number: user.phone_number,
+      phone: user.phone, // <- renamed
+      department: user.department,
+      role: user.role,
+      status: user.status,
+      isAdmin: user.isAdmin,
     });
   } catch {
     res.status(500).json({ message: "Server error" });

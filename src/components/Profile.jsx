@@ -27,14 +27,13 @@ export default function Profile() {
 
     try {
       setPasswordBusy(true);
-      await http.put("/me/password", { newPassword }); // backend: router.put("/me/password")
+      await http.put("/me/password", { newPassword });
       notify("success", "הסיסמה עודכנה בהצלחה.");
       setNewPassword("");
       setConfirmPassword("");
     } catch (e) {
       if (e?.response?.status === 401) {
         notify("error", "התחבר מחדש.");
-        // e.g., navigate("/login");
       } else {
         notify("error", e?.response?.data?.message || "שגיאה בעדכון סיסמה.");
       }
@@ -74,38 +73,31 @@ export default function Profile() {
             <>
               {/* Read-only profile info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div className="border rounded-lg p-4">
-                  <div className="text-sm text-gray-500 mb-1">
-                    First name / שם פרטי
-                  </div>
-                  <div className="font-semibold">{me.first_name || "-"}</div>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <div className="text-sm text-gray-500 mb-1">
-                    Last name / שם משפחה
-                  </div>
-                  <div className="font-semibold">{me.last_name || "-"}</div>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <div className="text-sm text-gray-500 mb-1">
-                    Username / שם משתמש
-                  </div>
-                  <div className="font-semibold">{me.username}</div>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <div className="text-sm text-gray-500 mb-1">
-                    Department / מחלקה
-                  </div>
-                  <div className="font-semibold">{me.department || "-"}</div>
-                </div>
-              </div>
-
-              {/* Email */}
-              <div className="mb-6">
-                <div className="border rounded-lg p-4 w-full">
-                  <div className="text-sm text-gray-500 mb-1">Email / מייל</div>
-                  <div className="font-semibold break-words">{me.email}</div>
-                </div>
+                <InfoCard
+                  label="Employee ID / מזהה עובד"
+                  value={me.person_id || "-"}
+                />
+                <InfoCard label="Username / שם משתמש" value={me.username} />
+                <InfoCard
+                  label="First name / שם פרטי"
+                  value={me.first_name || "-"}
+                />
+                <InfoCard
+                  label="Last name / שם משפחה"
+                  value={me.last_name || "-"}
+                />
+                <InfoCard label="Email / מייל" value={me.email || "-"} full />
+                <InfoCard label="Phone / טלפון" value={me.phone || "-"} />
+                <InfoCard
+                  label="Department / מחלקה"
+                  value={me.department || "-"}
+                />
+                <InfoCard label="Role / תפקיד" value={me.role || "-"} />
+                <InfoCard label="Status / סטטוס" value={me.status || "-"} />
+                <InfoCard
+                  label="Admin / מנהל"
+                  value={me.isAdmin ? "Yes / כן" : "No / לא"}
+                />
               </div>
 
               {/* Password change */}
@@ -148,6 +140,16 @@ export default function Profile() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Small helper so your cards look uniform */
+function InfoCard({ label, value, full = false }) {
+  return (
+    <div className={`border rounded-lg p-4 ${full ? "sm:col-span-2" : ""}`}>
+      <div className="text-sm text-gray-500 mb-1">{label}</div>
+      <div className="font-semibold break-words">{String(value)}</div>
     </div>
   );
 }
