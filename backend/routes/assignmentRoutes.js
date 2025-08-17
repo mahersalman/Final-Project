@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 const Assignment = require("../models/assignment");
+const { requireAuth, requireAdmin } = require("../middleware/auth");
 
 // GET assignments for a specific date
 router.get("/assignments", async (req, res) => {
@@ -34,7 +35,7 @@ router.get("/assignments", async (req, res) => {
 });
 
 // POST new assignment
-router.post("/assignments", async (req, res) => {
+router.post("/assignments", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { date, workingStation_name, person_id, number_of_hours } = req.body;
 
@@ -62,7 +63,7 @@ router.post("/assignments", async (req, res) => {
 });
 
 // DELETE assignment
-router.delete("/assignments", async (req, res) => {
+router.delete("/assignments", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { date, person_id, assignmentNumber } = req.body;
 

@@ -1,15 +1,15 @@
+// components/stations/AssignmentComp.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { CalendarIcon, Trash2, FileDown } from "lucide-react";
-import axios from "axios";
 import * as XLSX from "xlsx";
 import AddAssignmentForm from "./AddAssignmentForm";
-import serverUrl from "config/api";
+import { http } from "../../api/http";
+import { useMe } from "../../hooks/useMe";
 
 const Alert = ({ children, type = "info" }) => {
   const bgColor = type === "error" ? "bg-red-100" : "bg-yellow-100";
   const borderColor = type === "error" ? "border-red-500" : "border-yellow-500";
   const textColor = type === "error" ? "text-red-700" : "text-yellow-700";
-
   return (
     <div
       className={`${bgColor} border-l-4 ${borderColor} ${textColor} p-4 mb-4`}
@@ -40,7 +40,22 @@ const DatePicker = ({ selectedDate, onDateChange }) => {
   );
 };
 
-const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
+/**
+ * Props:
+ *  - selectedStation
+ *  - showForm
+ *  - onCloseForm
+ *  - isAdmin (optional) -> if not provided, inferred from useMe()
+ */
+const AssignmentComp = ({
+  selectedStation,
+  showForm,
+  onCloseForm,
+  isAdmin: isAdminProp,
+}) => {
+  const { me } = useMe();
+  const isAdmin = isAdminProp ?? !!me?.isAdmin;
+
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -51,25 +66,13 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
   const [assignmentMessage, setAssignmentMessage] = useState("");
 
   const fetchEmployees = useCallback(async () => {
-    try {
-      const response = await axios.get(`${serverUrl}/api/employees`);
-      setEmployees(response.data);
-    } catch (err) {
-      console.error("Error fetching employees:", err);
-      throw new Error("Failed to fetch employees: " + err.message);
-    }
+    const { data } = await http.get("/employees"); // if protected, token is sent
+    setEmployees(data);
   }, []);
 
   const fetchAssignments = useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `${serverUrl}/api/assignments?date=${selectedDate}`
-      );
-      setAssignments(response.data);
-    } catch (err) {
-      console.error("Error fetching assignments:", err);
-      throw new Error("Failed to fetch assignments: " + err.message);
-    }
+    const { data } = await http.get(`/assignments?date=${selectedDate}`);
+    setAssignments(data);
   }, [selectedDate]);
 
   useEffect(() => {
@@ -80,16 +83,22 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
         await fetchEmployees();
         await fetchAssignments();
       } catch (err) {
-        setError("Failed to fetch data: " + err.message);
+        setError(
+          "Failed to fetch data: " +
+            (err.response?.data?.message || err.message)
+        );
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, [fetchEmployees, fetchAssignments]);
 
   const handleAssignmentSubmit = async (newAssignments) => {
+    if (!isAdmin) {
+      setError("רק מנהל יכול לבצע שיבוץ.");
+      return;
+    }
     try {
       setIsLoading(true);
       setError(null);
@@ -108,12 +117,10 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
           (a) => a.person_id === employee.person_id
         );
 
-        if (existingAssignments.length === 0) {
-          await saveAssignmentToDB(employee, newAssignment.assignment1, 1);
-          message += `נוסף שיבוץ ראשון ל${newAssignment.fullName}. `;
-        } else if (existingAssignments.length === 1) {
-          await saveAssignmentToDB(employee, newAssignment.assignment1, 2);
-          message += `נוסף שיבוץ שני ל${newAssignment.fullName}. `;
+        // We still only add up to 2 per your original logic
+        if (existingAssignments.length <= 1) {
+          await saveAssignmentToDB(employee, newAssignment.assignment1);
+          message += `נוסף שיבוץ ל${newAssignment.fullName}. `;
         } else {
           message += `ל${newAssignment.fullName} כבר יש שני שיבוצים. `;
         }
@@ -122,64 +129,57 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
       await fetchAssignments();
       setAssignmentMessage(message || "השיבוצים נוספו בהצלחה");
     } catch (error) {
-      console.error("Error submitting assignments:", error);
-      setError("Failed to submit assignments: " + error.message);
+      setError(
+        "Failed to submit assignments: " +
+          (error.response?.data?.message || error.message)
+      );
     } finally {
       setIsLoading(false);
-      onCloseForm();
+      onCloseForm?.();
     }
   };
 
-  const saveAssignmentToDB = async (
-    employee,
-    workingStation,
-    assignmentNumber
-  ) => {
-    try {
-      const assignmentData = {
-        date: selectedDate,
-        workingStation_name: workingStation,
-        person_id: employee.person_id,
-        number_of_hours: 4,
-      };
-
-      const response = await axios.post(
-        `${serverUrl}/api/assignments`,
-        assignmentData
-      );
-      console.log(`Assignment ${assignmentNumber} saved:`, response.data);
-    } catch (error) {
-      console.error("Error saving assignment to DB:", error);
-      throw error;
-    }
+  const saveAssignmentToDB = async (employee, workingStation) => {
+    const assignmentData = {
+      date: selectedDate,
+      workingStation_name: workingStation,
+      person_id: employee.person_id,
+      number_of_hours: 4,
+    };
+    // admin-only route on server
+    await http.post("/assignments", assignmentData);
   };
 
   const handleDeleteAssignment = async (fullName, assignmentIndex) => {
+    if (!isAdmin) {
+      setError("רק מנהל יכול למחוק שיבוץ.");
+      return;
+    }
     try {
       const employee = employees.find(
         (e) => `${e.first_name} ${e.last_name}` === fullName
       );
-      if (!employee) {
-        throw new Error("Employee not found");
-      }
+      if (!employee) throw new Error("Employee not found");
 
-      const response = await axios.delete(`${serverUrl}/api/assignments`, {
+      const resp = await http.delete("/assignments", {
         data: {
           date: selectedDate,
           person_id: employee.person_id,
-          assignmentNumber: assignmentIndex + 1, // Adding 1 because array index is 0-based
+          assignmentNumber: assignmentIndex + 1,
         },
       });
 
-      if (response.status === 200) {
+      if (resp.status === 200) {
         setAssignmentMessage(`השיבוץ של ${fullName} נמחק בהצלחה.`);
-        await fetchAssignments(); // Refresh assignments
+        await fetchAssignments();
       } else {
         throw new Error("Failed to delete assignment");
       }
     } catch (error) {
-      console.error("Error deleting assignment:", error);
-      setError("Failed to delete assignment: " + error.message);
+      setError(
+        "Failed to delete assignment: " +
+          (error.response?.data?.message || error.message)
+      );
     }
   };
 
@@ -198,7 +198,6 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
         ];
       }),
     ]);
-
     XLSX.utils.book_append_sheet(workbook, worksheet, "Assignments");
     XLSX.writeFile(workbook, `Assignments_${selectedDate}.xlsx`);
   };
@@ -210,6 +209,11 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800">
         טבלת שיבוץ יומי
       </h1>
+
+      {!isAdmin && (
+        <Alert>מצב צפייה בלבד — רק מנהל יכול להוסיף או למחוק שיבוצים.</Alert>
+      )}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
         <DatePicker
           selectedDate={selectedDate}
@@ -223,12 +227,15 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
           ייצא לאקסל
         </button>
       </div>
+
       <div className="mt-4 sm:mt-6 bg-white border border-gray-200 rounded-lg p-4">
         <h2 className="font-bold mb-4 text-lg sm:text-xl text-gray-700">
           שיבוץ ליום {new Date(selectedDate).toLocaleDateString("he-IL")}
         </h2>
+
         {error && <Alert type="error">{error}</Alert>}
         {assignmentMessage && <Alert>{assignmentMessage}</Alert>}
+
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
@@ -251,7 +258,9 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                 );
                 return (
                   <tr key={employee.person_id} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 p-2 text-right">{`${employee.first_name} ${employee.last_name}`}</td>
+                    <td className="border border-gray-300 p-2 text-right">
+                      {`${employee.first_name} ${employee.last_name}`}
+                    </td>
                     {[0, 1].map((index) => (
                       <td key={index} className="border border-gray-300 p-2">
                         <div className="flex justify-between items-center">
@@ -259,7 +268,7 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
                             {employeeAssignments[index]?.workingStation_name ||
                               ""}
                           </span>
-                          {employeeAssignments[index] && (
+                          {isAdmin && employeeAssignments[index] && (
                             <button
                               onClick={() =>
                                 handleDeleteAssignment(
@@ -283,7 +292,9 @@ const AssignmentComp = ({ selectedStation, showForm, onCloseForm }) => {
           </table>
         </div>
       </div>
-      {showForm && (
+
+      {/* Add form only for admins */}
+      {isAdmin && showForm && (
         <AddAssignmentForm
           onClose={onCloseForm}
           onSubmit={handleAssignmentSubmit}

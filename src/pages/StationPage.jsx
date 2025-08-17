@@ -1,19 +1,14 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar";
 import StationItem from "../components/stations/StationItem";
-import AssinmentComp from "../components/stations/AssinmentComp";
+import AssignmentComp from "../components/stations/AssinmentComp";
+import { useMe } from "../hooks/useMe";
 
 const StationPage = () => {
   const [selectedStation, setSelectedStation] = useState(null);
   const [showAssignmentForm, setShowAssignmentForm] = useState(false);
-
-  const handleStationSelect = (station) => {
-    setSelectedStation(station);
-  };
-
-  const handleAssignmentButtonClick = () => {
-    setShowAssignmentForm(true);
-  };
+  const { me } = useMe();
+  const isAdmin = !!me?.isAdmin;
 
   return (
     <div>
@@ -29,28 +24,30 @@ const StationPage = () => {
         <div
           style={{
             flex: "1",
-            backgroundColor: "#f0f0f0",
+            background: "#f0f0f0",
             padding: "20px",
             overflowY: "auto",
           }}
         >
           <StationItem
-            onSelectStation={handleStationSelect}
-            onAssignmentButtonClick={handleAssignmentButtonClick}
+            onSelectStation={setSelectedStation}
+            onAssignmentButtonClick={() => setShowAssignmentForm(true)}
+            isAdmin={isAdmin}
           />
         </div>
         <div
           style={{
             flex: "3",
-            backgroundColor: "#e0e0e0",
+            background: "#e0e0e0",
             padding: "20px",
             overflowY: "auto",
           }}
         >
-          <AssinmentComp
+          <AssignmentComp
             selectedStation={selectedStation}
-            showForm={showAssignmentForm}
+            showForm={isAdmin && showAssignmentForm}
             onCloseForm={() => setShowAssignmentForm(false)}
+            isAdmin={isAdmin}
           />
         </div>
       </div>

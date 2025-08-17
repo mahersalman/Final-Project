@@ -5,7 +5,7 @@ import axios from "axios";
 import { Filter, Loader } from "lucide-react";
 import serverUrl from "config/api";
 
-const StationItem = ({ onSelectStation, onAssignmentButtonClick }) => {
+const StationItem = ({ onSelectStation, onAssignmentButtonClick, isAdmin }) => {
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedProduct, setSelectedProduct] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
@@ -141,16 +141,16 @@ const StationItem = ({ onSelectStation, onAssignmentButtonClick }) => {
           </p>
         )}
       </div>
-
       <div className="mt-4">
         <button
-          onClick={onAssignmentButtonClick}
+          onClick={() => isAdmin && onAssignmentButtonClick()}
           className={`w-full font-bold py-2 px-4 rounded flex items-center justify-center ${
-            selectedStation
+            selectedStation && isAdmin
               ? "bg-[#1F6231] hover:bg-[#309d49] text-white cursor-pointer"
               : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
-          disabled={!selectedStation}
+          disabled={!selectedStation || !isAdmin}
+          title={!isAdmin ? "Admins only" : ""}
         >
           ביצוע שיבוץ
         </button>
