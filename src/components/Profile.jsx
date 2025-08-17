@@ -86,7 +86,7 @@ export default function Profile() {
                   label="Last name / שם משפחה"
                   value={me.last_name || "-"}
                 />
-                <InfoCard label="Email / מייל" value={me.email || "-"} full />
+                <InfoCard label="Email / מייל" value={me.email || "-"} />
                 <InfoCard label="Phone / טלפון" value={me.phone || "-"} />
                 <InfoCard
                   label="Department / מחלקה"

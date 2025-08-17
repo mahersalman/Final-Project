@@ -30,8 +30,7 @@ router.get("/me", requireAuth, async (req, res) => {
   }
 });
 
-//Change Password (logged-in user)
-router.put("/me/password", async (req, res) => {
+router.put("/me/password", requireAuth, async (req, res) => {
   try {
     const { newPassword } = req.body || {};
     if (!newPassword || newPassword.length < 6) {
@@ -40,11 +39,15 @@ router.put("/me/password", async (req, res) => {
         .json({ message: "Password must be at least 6 characters long" });
     }
 
+    // req.user is set by requireAuth
     const user = await User.findById(req.user.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.password = await bcrypt.hash(newPassword, 10);
+    user.passwordChangedAt = new Date(); // optional: helps invalidate old JWTs
     await user.save();
+
+    return res.json({ message: "Password updated successfully" });
   } catch (e) {
     console.error("PUT /me/password error", e);
     return res.status(500).json({ message: "Server error" });
