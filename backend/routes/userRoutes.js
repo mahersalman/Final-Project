@@ -19,7 +19,7 @@ router.get("/me", requireAuth, async (req, res) => {
       first_name: user.first_name,
       last_name: user.last_name,
       email: user.email,
-      phone: user.phone, // <- renamed
+      phone_number: user.phone_number, // <- renamed
       department: user.department,
       role: user.role,
       status: user.status,
@@ -44,7 +44,6 @@ router.put("/me/password", async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.password = await bcrypt.hash(newPassword, 10);
-    user.passwordChangedAt = new Date();
     await user.save();
   } catch (e) {
     console.error("PUT /me/password error", e);

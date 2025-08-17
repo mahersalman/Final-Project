@@ -11,8 +11,7 @@ router.get("/dashboard-data", async (req, res) => {
     // Calculate active workers (status === 'פעיל')
     const activeWorkers = await User.countDocuments({ status: "פעיל" });
     // Calculate total workers and inactive workers
-    const totalWorkers = await User.countDocuments();
-    const inactiveWorkers = totalWorkers - activeWorkers;
+    const inactiveWorkers = await User.countDocuments({ status: "לא פעיל" });
     // Calculate stations
     const totalStations = await Station.countDocuments();
 
