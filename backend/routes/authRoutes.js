@@ -185,7 +185,6 @@ router.post("/forgot-password", async (req, res) => {
 
     // 2) Hash and update the password
     user.password = await bcrypt.hash(temp, 10);
-    user.passwordChangedAt = new Date(); // optional: track rotation
     await user.save();
 
     // 3) Send temporary password by email
