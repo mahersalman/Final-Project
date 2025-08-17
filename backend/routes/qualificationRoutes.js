@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Qualification = require("../models/qualification");
 const User = require("../models/User");
+const { requireAuth, requireAdmin } = require("../middleware/auth");
 
 // Get all qualifications
 router.get("/qualifications", async (req, res) => {
@@ -21,7 +22,7 @@ router.get("/qualifications", async (req, res) => {
 });
 
 // Create new qualification
-router.post("/qualifications", async (req, res) => {
+router.post("/qualifications", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { person_id, station_name, avg } = req.body;
     const newQualification = new Qualification({

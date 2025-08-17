@@ -15,7 +15,7 @@ const Station = require("../models/station");
 // Get all employees
 router.get("/employees", async (req, res) => {
   try {
-    const employees = await User.find({});
+    const employees = await User.find({}, "-password -__v");
     res.json(employees);
   } catch (error) {
     console.error("Error fetching employees:", error);

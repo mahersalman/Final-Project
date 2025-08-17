@@ -69,7 +69,7 @@ const StationSelector = ({
               <input
                 type="number"
                 placeholder="ממוצע יומי"
-                value={averages[station] || ""}
+                value={averages[station] || 0}
                 onChange={(e) => handleAverageChange(station, e.target.value)}
                 className="border border-gray-300 rounded-md px-3 py-1 w-28 text-sm focus:outline-none focus:ring-2 focus:ring-[#1F6231] focus:border-transparent transition duration-150 ease-in-out"
               />

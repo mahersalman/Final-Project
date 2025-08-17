@@ -64,6 +64,8 @@ router.post("/login", async (req, res) => {
 
 // --- Admin-only Register ---
 // POST /api/register (admin only)
+// --- Admin-only Register ---
+// POST /api/register (admin only)
 router.post("/register", requireAuth, requireAdmin, async (req, res) => {
   try {
     const {
@@ -71,74 +73,122 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
       person_id,
       first_name,
       last_name,
-      password, // optional; we can generate if missing
+      password,
       isAdmin = false,
       department,
       email,
-      phone_number, // incoming legacy name
-      phone, // or new name
+      phone_number,
       role = "Employee",
       status = "פעיל",
     } = req.body || {};
 
-    // username default = person_id if not given
-    const finalUsername = (username || person_id || "").trim();
+    // --- Normalize inputs ---
+    const finalPersonId = (person_id || "").trim() || null;
+    const finalUsername = (username || finalPersonId || "").trim();
+    const finalEmail = (email || "").trim().toLowerCase();
+    const finalPhone = (phone_number ?? "").trim();
+
+    // --- Required fields ---
     if (!finalUsername) {
-      return res
-        .status(400)
-        .json({ message: "username or person_id is required" });
+      return res.status(400).json({
+        success: false,
+        message: "username or person_id is required",
+      });
     }
-
-    const exists = await User.findOne({ username: finalUsername });
-    if (exists || exists.email === email)
-      return res.status(400).json({ message: "Username already exists" });
-
-    // require names
     if (!first_name || !last_name) {
-      return res
-        .status(400)
-        .json({ message: "first_name and last_name are required" });
+      return res.status(400).json({
+        success: false,
+        message: "first_name and last_name are required",
+      });
+    }
+    if (finalEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(finalEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is not valid",
+      });
     }
 
-    // password: use provided or generate a temp one
-    const tmp = require("crypto").randomBytes(8).toString("base64url"); // ~11 chars
-    const plainPassword = password && password.length >= 6 ? password : tmp;
+    // --- Build OR query for duplicate checks (only for provided fields) ---
+    const orClauses = [];
+    if (finalUsername) orClauses.push({ username: finalUsername });
+    if (finalPersonId) orClauses.push({ person_id: finalPersonId });
+    if (finalEmail) orClauses.push({ email: finalEmail });
+
+    if (orClauses.length) {
+      const conflicts = await User.find({ $or: orClauses })
+        .select("username person_id email")
+        .lean();
+
+      if (conflicts.length) {
+        // Figure out exactly which fields conflict
+        const conflict = {
+          username: conflicts.some((u) => u.username === finalUsername),
+          person_id: finalPersonId
+            ? conflicts.some((u) => u.person_id === finalPersonId)
+            : false,
+          email: finalEmail
+            ? conflicts.some((u) => u.email === finalEmail)
+            : false,
+        };
+
+        return res.status(409).json({
+          success: false,
+          message: "One or more unique fields already exist.",
+          conflict, // { username: true/false, person_id: true/false, email: true/false }
+        });
+      }
+    }
+
+    // --- Decide password (provided or generated) ---
+    const providedOk = typeof password === "string" && password.length >= 6;
+    const tmp = require("crypto").randomBytes(9).toString("base64url"); // ~12 chars
+    const plainPassword = providedOk ? password : tmp;
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
+    // --- Create user ---
     const newUser = await User.create({
-      person_id: person_id || null,
+      person_id: finalPersonId,
       username: finalUsername,
       password: hashedPassword,
       first_name,
       last_name,
       isAdmin: !!isAdmin,
       department: department || "",
-      email: email || "",
-      phone: phone ?? phone_number ?? "",
+      email: finalEmail || "",
+      phone: finalPhone || "",
       role,
       status,
     });
 
-    // ✅ Send welcome email after success
-    await sendEmail({
-      subject: "Welcome to MigdalOr!",
-      to: { email, name: `${first_name} ${last_name}`.trim() || username },
-      keyValues: {
-        username,
-        password,
-        first_name,
-        last_name,
-        email,
-        department,
-        phone_number,
-        role,
-        status,
-      },
-      excludeKeys: [],
-      title: "Migdalor",
-    }).catch((err) => console.error("Email send error:", err));
+    // --- Send welcome email (include the actual password used) ---
+    // NOTE: Emailing passwords is risky; prefer a reset link in production.
+    if (finalEmail) {
+      sendEmail({
+        subject: "Welcome to MigdalOr!",
+        to: {
+          email: finalEmail,
+          name: `${first_name} ${last_name}`.trim() || finalUsername,
+        },
+        keyValues: {
+          username: finalUsername,
+          password: plainPassword,
+          first_name,
+          last_name,
+          email: finalEmail,
+          department: department || "",
+          phone: finalPhone || "",
+          role,
+          status,
+          note: providedOk
+            ? "Your account has been created."
+            : "A temporary password was generated. Please log in and change it immediately.",
+        },
+        title: "Migdalor",
+      }).catch((err) => console.error("Email send error:", err));
+    }
 
-    res.status(201).json({
+    return res.status(201).json({
+      success: true,
       message: "User created successfully",
       user: {
         id: newUser._id,
@@ -156,7 +206,10 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error("Register error:", err);
-    res.status(500).json({ message: "Server error during registration" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error during registration",
+    });
   }
 });
 router.post("/forgot-password", async (req, res) => {
