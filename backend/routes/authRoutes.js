@@ -13,7 +13,8 @@ const {
   expiryDateFromNow,
   verifyResetToken,
   RESET_TOKEN_TTL_MINUTES,
-} = require("../utils/passwordReset");
+  generateTempPassword,
+} = require("../utils/password");
 const APP_BASE_URL = process.env.APP_BASE_URL || "http://localhost:3000";
 
 // Login route
@@ -89,7 +90,7 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
     }
 
     const exists = await User.findOne({ username: finalUsername });
-    if (exists)
+    if (exists || exists.email === email)
       return res.status(400).json({ message: "Username already exists" });
 
     // require names
@@ -158,63 +159,66 @@ router.post("/register", requireAuth, requireAdmin, async (req, res) => {
     res.status(500).json({ message: "Server error during registration" });
   }
 });
-
-/**
- * POST /auth/forgot-password
- * body: {  username?: string }
- * Always respond generically to avoid user enumeration.
- */
-router.post("/forgot-password", forgotLimiter, async (req, res) => {
+router.post("/forgot-password", async (req, res) => {
   try {
-    const { username } = req.body || {};
+    const { email } = req.body || {};
 
-    if (!username)
-      return res.json({
-        message: "Missing username",
-      });
+    if (!email || typeof email !== "string") {
+      return res.json({ success: false, message: "Invalid email address." });
+    }
 
-    const user = await User.findOne({ username });
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.json({ success: false, message: "Invalid email address." });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.json({
-        message: "username doesnt exists.",
+        success: false,
+        message: "There is no account related to this email.",
       });
     }
 
-    // Generate token
-    const raw = generateResetToken();
-    const tokenHash = await hashResetToken(raw);
+    // 1) Generate a temporary password
+    const temp = generateTempPassword(12);
 
-    user.passwordResetTokenHash = tokenHash;
-    user.passwordResetExpires = expiryDateFromNow(RESET_TOKEN_TTL_MINUTES);
+    // 2) Hash and update the password
+    user.password = await bcrypt.hash(temp, 10);
+    user.passwordChangedAt = new Date(); // optional: track rotation
     await user.save();
 
-    // Construct reset link
-    const link = `${APP_BASE_URL}/reset-password?token=${encodeURIComponent(
-      raw
-    )}&uid=${user._id}`;
-
-    sendEmail({
-      subject: "Reset Your PASSWORD",
+    // 3) Send temporary password by email
+    await sendEmail({
+      subject: "Your Temporary Password",
       to: {
         email: user.email,
-        name: `${user.first_name} ${user.last_name}`.trim() || username,
+        name:
+          `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+          user.username,
       },
       keyValues: {
-        link,
+        username: user.username,
+        new_password: temp,
+        note: "Please log in and change your password immediately.",
       },
-    }).catch((e) => console.error("reset email error:", e?.body || e));
+      title: "Migdalor",
+    }).catch((e) => {
+      console.error("sendEmail error:", e?.body || e);
+    });
 
     return res.json({
-      message: "a reset link has been sent to your email",
+      success: true,
+      message: "An email has been sent with your new password.",
     });
   } catch (e) {
     console.error("/forgot-password error:", e);
     return res.json({
-      message: "Server Error - /forgot-password",
+      success: false,
+      message: "Something went wrong. Please try again later.",
     });
   }
 });
-
 /**
  * POST /auth/reset-password
  * body: { uid: string, token: string, newPassword: string }

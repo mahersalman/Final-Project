@@ -12,11 +12,6 @@ const userSchema = new mongoose.Schema(
     role: { type: String, trim: true },
     status: { type: String, trim: true },
     isAdmin: { type: Boolean, default: false },
-
-    // Password reset
-    passwordResetTokenHash: { type: String, index: true },
-    passwordResetExpires: { type: Date },
-    passwordChangedAt: { type: Date },
   },
   { collection: "user", timestamps: true }
 );

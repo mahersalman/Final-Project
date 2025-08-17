@@ -23,10 +23,21 @@ async function verifyResetToken(rawToken, tokenHash) {
   return bcrypt.compare(rawToken, tokenHash);
 }
 
+function generateTempPassword(length = 12) {
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return out;
+}
+
 module.exports = {
   generateResetToken,
   hashResetToken,
   expiryDateFromNow,
   verifyResetToken,
   RESET_TOKEN_TTL_MINUTES,
+  generateTempPassword,
 };
