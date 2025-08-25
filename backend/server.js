@@ -31,8 +31,8 @@ async function startServer() {
     console.log("✅ Database connected successfully");
 
     // Setup MQTT
-    // setupMQTT();
-    // console.log("✅ MQTT service initialized");
+    setupMQTT();
+    console.log("✅ MQTT service initialized");
 
     // Routes
     app.use("/api", authRoutes);

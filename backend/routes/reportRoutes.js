@@ -4,17 +4,37 @@ const router = express.Router();
 
 // Main report route
 router.get("/report", async (req, res) => {
-  const { date, employee } = req.query;
-  console.log("Received report request:", { date, employee });
+  let { date, startDate, endDate, employee, stationId, station } = req.query;
+  console.log("Received report request:", {
+    date,
+    startDate,
+    endDate,
+    employee,
+  });
 
   try {
     let reportData;
-    if (date) {
-      reportData = await generateDailyReport(date, employee);
+    // If station name provided, try to translate to stationId
+    if (!stationId && station) {
+      const Station = require("../models/station");
+      const stationDoc = await Station.findOne({ station_name: station });
+      if (stationDoc && stationDoc.station_id) {
+        stationId = stationDoc.station_id;
+      }
+    }
+
+    if (date || (startDate && endDate)) {
+      reportData = await generateRangeReport({
+        date,
+        startDate,
+        endDate,
+        employee,
+        stationId,
+      });
     } else if (employee) {
-      reportData = await generateMonthlyEmployeeReport(employee);
+      reportData = await generateMonthlyEmployeeReport(employee, stationId);
     } else {
-      reportData = await generateMonthlyProductionReport();
+      reportData = await generateMonthlyProductionReport(stationId);
     }
     console.log("Report data generated:", reportData);
     res.json(reportData);
@@ -25,16 +45,17 @@ router.get("/report", async (req, res) => {
 });
 
 // Report generation functions
-async function generateMonthlyProductionReport() {
+async function generateMonthlyProductionReport(stationId) {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
   oneMonthAgo.setHours(0, 0, 0, 0);
 
+  const baseQuery = { timestamp: { $gte: oneMonthAgo } };
+  if (stationId) baseQuery.station_id = stationId;
+
   const messages = await mongoose.connection.db
     .collection("mqttMsg")
-    .find({
-      timestamp: { $gte: oneMonthAgo },
-    })
+    .find(baseQuery)
     .toArray();
 
   const reportData = {};
@@ -66,16 +87,17 @@ async function generateMonthlyProductionReport() {
     .sort((a, b) => a._id.localeCompare(b._id));
 }
 
-async function generateMonthlyEmployeeReport(employee) {
+async function generateMonthlyEmployeeReport(employee, stationId) {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
   oneMonthAgo.setHours(0, 0, 0, 0);
 
+  const baseQuery = { timestamp: { $gte: oneMonthAgo } };
+  if (stationId) baseQuery.station_id = stationId;
+
   const messages = await mongoose.connection.db
     .collection("mqttMsg")
-    .find({
-      timestamp: { $gte: oneMonthAgo },
-    })
+    .find(baseQuery)
     .toArray();
 
   const reportData = {};
@@ -109,19 +131,38 @@ async function generateMonthlyEmployeeReport(employee) {
     .sort((a, b) => a._id.localeCompare(b._id));
 }
 
-async function generateDailyReport(date, employee) {
-  const startDate = new Date(date);
-  startDate.setHours(0, 0, 0, 0);
-  const endDate = new Date(startDate);
-  endDate.setDate(endDate.getDate() + 1);
+async function generateRangeReport({
+  date,
+  startDate,
+  endDate,
+  employee,
+  stationId,
+}) {
+  let rangeStart;
+  let rangeEnd;
 
-  let query = {
-    timestamp: { $gte: startDate, $lt: endDate },
+  if (date) {
+    rangeStart = new Date(date);
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd = new Date(rangeStart);
+    rangeEnd.setDate(rangeEnd.getDate() + 1);
+  } else if (startDate && endDate) {
+    rangeStart = new Date(startDate);
+    rangeStart.setHours(0, 0, 0, 0);
+    rangeEnd = new Date(endDate);
+    // include end day fully
+    rangeEnd.setDate(rangeEnd.getDate() + 1);
+    rangeEnd.setHours(0, 0, 0, 0);
+  }
+
+  const baseQuery = {
+    timestamp: { $gte: rangeStart, $lt: rangeEnd },
   };
+  if (stationId) baseQuery.station_id = stationId;
 
-  let messages = await mongoose.connection.db
+  const messages = await mongoose.connection.db
     .collection("mqttMsg")
-    .find(query)
+    .find(baseQuery)
     .toArray();
 
   let goodValves = 0;
@@ -130,10 +171,7 @@ async function generateDailyReport(date, employee) {
   messages.forEach((msg) => {
     try {
       const parsedMessage = JSON.parse(msg.message);
-
-      if (employee && parsedMessage["User ID"] !== employee) {
-        return; // Skip this message if it's not for the specified employee
-      }
+      if (employee && parsedMessage["User ID"] !== employee) return;
 
       if (parsedMessage["Shluker Result"] === "Good Valve") {
         goodValves++;

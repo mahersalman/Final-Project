@@ -32,10 +32,27 @@ router.get("/dashboard-data", async (req, res) => {
     const activeStationsCount = activeStations.length;
     const inactiveStations = totalStations - activeStationsCount;
 
+    // Count today's invalid valves from MQTT messages
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const mqttMessages = await mongoose.connection.db
+      .collection("mqttMsg")
+      .find({ timestamp: { $gte: today } })
+      .toArray();
+
+    let dailyDefects = 0;
+    mqttMessages.forEach((msg) => {
+      try {
+        const parsed = JSON.parse(msg.message);
+        if (parsed["Shluker Result"] === "Invalid Valve") dailyDefects++;
+      } catch (_) {}
+    });
+
     const responseData = {
       inactiveWorkers,
       activeWorkers,
-      dailyDefects: 0, // Placeholder as before
+      dailyDefects,
       inactiveStations,
     };
     res.json(responseData);

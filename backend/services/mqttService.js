@@ -30,10 +30,19 @@ function setupMQTT() {
 
     // Save the message to the mqttMsg collection
     try {
+      const raw = message.toString();
+      let parsed = null;
+      try {
+        parsed = JSON.parse(raw);
+      } catch (_) {}
+
       const newMessage = {
         topic: topic,
-        message: message.toString(),
+        message: raw,
         timestamp: new Date(),
+        // Convenience fields (if present in payload)
+        station_id: parsed && parsed.station_id ? parsed.station_id : undefined,
+        user_id: parsed && parsed["User ID"] ? parsed["User ID"] : undefined,
       };
 
       await mongoose.connection.db.collection("mqttMsg").insertOne(newMessage);

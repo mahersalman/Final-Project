@@ -325,3 +325,105 @@ module.exports = {
   sampleAssignments,
   DEPARTMENTS,
 };
+
+// --- MQTT historical sample messages (for reports) ---------------------------
+// Only IDs are used: station_id and "User ID". Results are Good/Invalid.
+// We'll export a helper that builds messages with proper timestamps.
+
+function buildMqttSeedMessages() {
+  // Hardcoded dates at 10:00 local time
+  const d = (y, m, day) => {
+    const t = new Date(y, m - 1, day, 10, 0, 0, 0);
+    return t;
+  };
+
+  const AUG20 = d(2025, 8, 20);
+  const AUG22 = d(2025, 8, 22);
+  const JUL01 = d(2025, 7, 1);
+  const JUL10 = d(2025, 7, 10);
+  const JUL25 = d(2025, 7, 25);
+
+  const messages = [];
+
+  const build = (topic, userId, stationId, result, ts) => ({
+    topic,
+    message: JSON.stringify({
+      "Shluker Result": result,
+      "User ID": userId,
+      station_id: stationId,
+    }),
+    timestamp: ts,
+    station_id: stationId,
+    user_id: userId,
+  });
+
+  // 20.08.2025: ST001 (EMP001 2 good, 1 invalid), ST002 (EMP002 1 good)
+  messages.push(
+    build("Braude/Shluker/Station-1", "EMP001", "ST001", "Good Valve", AUG20),
+    build("Braude/Shluker/Station-1", "EMP001", "ST001", "Good Valve", AUG20),
+    build(
+      "Braude/Shluker/Station-1",
+      "EMP001",
+      "ST001",
+      "Invalid Valve",
+      AUG20
+    ),
+    build("Braude/Shluker/Station-2", "EMP002", "ST002", "Good Valve", AUG20)
+  );
+
+  // 22.08.2025: ST003 (EMP003 2 invalid), ST001 (EMP004 1 good)
+  messages.push(
+    build(
+      "Braude/Shluker/Station-3",
+      "EMP003",
+      "ST003",
+      "Invalid Valve",
+      AUG22
+    ),
+    build(
+      "Braude/Shluker/Station-3",
+      "EMP003",
+      "ST003",
+      "Invalid Valve",
+      AUG22
+    ),
+    build("Braude/Shluker/Station-1", "EMP004", "ST001", "Good Valve", AUG22)
+  );
+
+  // 01.07.2025: ST001 (EMP001 1 good), ST002 (EMP002 1 invalid), ST003 (EMP003 1 good)
+  messages.push(
+    build("Braude/Shluker/Station-1", "EMP001", "ST001", "Good Valve", JUL01),
+    build(
+      "Braude/Shluker/Station-2",
+      "EMP002",
+      "ST002",
+      "Invalid Valve",
+      JUL01
+    ),
+    build("Braude/Shluker/Station-3", "EMP003", "ST003", "Good Valve", JUL01)
+  );
+
+  // 10.07.2025: ST002 (EMP002 2 good), ST001 (EMP004 1 invalid)
+  messages.push(
+    build("Braude/Shluker/Station-2", "EMP002", "ST002", "Good Valve", JUL10),
+    build("Braude/Shluker/Station-2", "EMP002", "ST002", "Good Valve", JUL10),
+    build("Braude/Shluker/Station-1", "EMP004", "ST001", "Invalid Valve", JUL10)
+  );
+
+  // 25.07.2025: ST003 (EMP003 1 good), ST001 (EMP001 1 invalid), ST002 (EMP002 1 good)
+  messages.push(
+    build("Braude/Shluker/Station-3", "EMP003", "ST003", "Good Valve", JUL25),
+    build(
+      "Braude/Shluker/Station-1",
+      "EMP001",
+      "ST001",
+      "Invalid Valve",
+      JUL25
+    ),
+    build("Braude/Shluker/Station-2", "EMP002", "ST002", "Good Valve", JUL25)
+  );
+
+  return messages;
+}
+
+module.exports.buildMqttSeedMessages = buildMqttSeedMessages;
