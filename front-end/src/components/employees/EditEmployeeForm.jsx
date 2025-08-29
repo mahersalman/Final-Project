@@ -4,7 +4,7 @@ import { http } from "../../api/http";
 import DepartmentDropdown from "../DepartmentDropdown";
 import StationSelector from "../StationSelector";
 import StatusDropdown from "./StatusDropdown";
-import { useMe } from "../../hooks/useMe";
+import { useMe } from "@hooks/useMe";
 
 const EditEmployeeForm = ({
   employee,

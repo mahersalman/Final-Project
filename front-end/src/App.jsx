@@ -1,10 +1,10 @@
 import { Routes, Route } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
-import HomePage from "./pages/HomePage";
-import WorkersPage from "./pages/WorkersPage";
-import ProductivityPage from "./pages/ProductivityPage";
-import StationPage from "./pages/StationPage";
-import Profile from "./components/Profile";
+import LoginPage from "@pages/LoginPage";
+import HomePage from "@pages/HomePage";
+import WorkersPage from "@pages/WorkersPage";
+import ProductivityPage from "@pages/ProductivityPage";
+import StationPage from "@pages/StationPage";
+import Profile from "@components/Profile";
 function App() {
   return (
     <Routes>

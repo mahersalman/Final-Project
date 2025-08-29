@@ -1,5 +1,5 @@
 import React from "react";
-import { status } from "constants/status";
+import { status } from "@constants/status";
 
 const StatusDropdown = ({ value, onChange, className = "" }) => {
   return (

@@ -1,10 +1,9 @@
 // components/stations/AssignmentComp.jsx
 import React, { useState, useEffect, useCallback } from "react";
 import { CalendarIcon, Trash2, FileDown } from "lucide-react";
-import * as XLSX from "xlsx";
 import AddAssignmentForm from "./AddAssignmentForm";
 import { http } from "../../api/http";
-import { useMe } from "../../hooks/useMe";
+import { useMe } from "@hooks/useMe";
 
 const Alert = ({ children, type = "info" }) => {
   const bgColor = type === "error" ? "bg-red-100" : "bg-yellow-100";
@@ -183,9 +182,8 @@ const AssignmentComp = ({
     }
   };
 
-  const exportToExcel = () => {
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet([
+  const exportToCsv = () => {
+    const rows = [
       ["שם ושם משפחה", "שיבוץ 1", "שיבוץ 2"],
       ...employees.map((employee) => {
         const employeeAssignments = assignments.filter(
@@ -197,11 +195,28 @@ const AssignmentComp = ({
           employeeAssignments[1]?.workingStation_name || "",
         ];
       }),
-    ]);
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Assignments");
-    XLSX.writeFile(workbook, `Assignments_${selectedDate}.xlsx`);
-  };
+    ];
 
+    // CSV escape
+    const csv = rows
+      .map((row) =>
+        row
+          .map((cell) => {
+            const s = String(cell ?? "");
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+          })
+          .join(",")
+      )
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Assignments_${selectedDate}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   if (isLoading) return <div>טוען...</div>;
 
   return (
@@ -220,7 +235,7 @@ const AssignmentComp = ({
           onDateChange={setSelectedDate}
         />
         <button
-          onClick={exportToExcel}
+          onClick={exportToCsv}
           className="bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded inline-flex items-center"
         >
           <FileDown className="mr-2" />

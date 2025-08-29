@@ -1,8 +1,9 @@
 const getServerUrl = () => {
-  const url = process.env.REACT_APP_SERVER_URL || "http://localhost:5001";
+  const url =
+    import.meta.env.VITE_REACT_APP_SERVER_URL || "http://localhost:5001";
 
-  if (!process.env.REACT_APP_SERVER_URL) {
-    console.warn("REACT_APP_SERVER_URL not set, using default:", url);
+  if (!import.meta.env.VITE_REACT_APP_SERVER_URL) {
+    console.warn("VITE_REACT_APP_SERVER_URL not set, using default:", url);
   }
 
   return url;

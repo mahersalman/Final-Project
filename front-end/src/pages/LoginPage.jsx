@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { http } from "../api/http"; //
+import { http } from "../api/http";
 
 const LoginPage = () => {
   // login form

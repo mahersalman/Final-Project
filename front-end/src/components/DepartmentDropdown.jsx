@@ -1,6 +1,6 @@
 import React from "react";
-import useFilterParams from "../hooks/useFilterParams";
-import { DEPARTMENTS } from "constants/departments";
+import useFilterParams from "@hooks/useFilterParams";
+import { DEPARTMENTS } from "@constants/departments";
 
 const DepartmentDropdown = ({
   value,

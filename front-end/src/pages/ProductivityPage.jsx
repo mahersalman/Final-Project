@@ -1,6 +1,6 @@
-import ShlokerCheck from "../components/reports/ShlokerCheck";
-import Navbar from "../components/Navbar";
-import ReportGenerator from "../components/reports/ReportGenerator";
+import ShlokerCheck from "@components/reports/ShlokerCheck";
+import Navbar from "@components/Navbar";
+import ReportGenerator from "@components/reports/ReportGenerator";
 
 const ProductivityPage = () => {
   return (

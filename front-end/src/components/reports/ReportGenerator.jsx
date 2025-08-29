@@ -3,7 +3,7 @@ import axios from "axios";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import ReportDisplay from "./ReportDisplay";
-import serverUrl from "config/api";
+import serverUrl from "@config/api";
 
 const ALL_STATIONS_OPTION = {
   _id: "ALL",

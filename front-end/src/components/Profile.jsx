@@ -1,7 +1,6 @@
-// src/pages/Profile.tsx
-import Navbar from "../components/Navbar";
-import DateTime from "../components/DateTime";
-import { useMe } from "../hooks/useMe";
+import Navbar from "@components/Navbar";
+import DateTime from "@components/DateTime";
+import { useMe } from "@hooks/useMe";
 import { useState } from "react";
 import { http } from "../api/http";
 

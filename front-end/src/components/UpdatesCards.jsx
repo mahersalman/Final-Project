@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import serverUrl from "config/api";
+import serverUrl from "@config/api";
 import { useNavigate, createSearchParams, Link } from "react-router-dom";
 
 // static meta

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import Navbar from "../components/Navbar";
-import StationItem from "../components/stations/StationItem";
-import AssignmentComp from "../components/stations/AssinmentComp";
-import { useMe } from "../hooks/useMe";
+import Navbar from "@components/Navbar";
+import StationItem from "@components/stations/StationItem";
+import AssignmentComp from "@components/stations/AssinmentComp";
+import { useMe } from "@hooks/useMe";
 
 const StationPage = () => {
   const [selectedStation, setSelectedStation] = useState(null);

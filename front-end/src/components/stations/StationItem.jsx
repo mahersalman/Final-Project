@@ -3,7 +3,7 @@ import DepartmentDropdown from "../DepartmentDropdown";
 import ProductDropdown from "../ProductDropdown";
 import axios from "axios";
 import { Filter, Loader } from "lucide-react";
-import serverUrl from "config/api";
+import serverUrl from "@config/api";
 
 const StationItem = ({ onSelectStation, onAssignmentButtonClick, isAdmin }) => {
   const [selectedDepartment, setSelectedDepartment] = useState("all");
@@ -31,7 +31,7 @@ const StationItem = ({ onSelectStation, onAssignmentButtonClick, isAdmin }) => {
       const response = await axios.get(`${serverUrl}/api/stations`);
       setStations(response.data);
       setIsLoading(false);
-    } catch (err) {
+    } catch {
       setError("Failed to fetch stations");
       setIsLoading(false);
     }

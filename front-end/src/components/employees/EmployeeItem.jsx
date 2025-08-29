@@ -7,11 +7,10 @@ import NameSearch from "../NameSearch";
 import EmployeeList from "../EmployeeList";
 import { FaFileExcel } from "react-icons/fa";
 import { FiFilter } from "react-icons/fi";
-import * as XLSX from "xlsx";
 import axios from "axios";
-import serverUrl from "config/api";
-import useFilterParams from "../../hooks/useFilterParams";
-import { useMe } from "hooks/useMe"; // add this if not already imported
+import serverUrl from "@config/api";
+import useFilterParams from "@hooks/useFilterParams";
+import { useMe } from "@hooks/useMe"; // add this if not already imported
 
 const EmployeeItem = () => {
   const [employees, setEmployees] = useState([]);
@@ -20,7 +19,7 @@ const EmployeeItem = () => {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { me, loading } = useMe();
+  const { me } = useMe();
 
   // read-only here; controls update them themselves
   const { department, status, name, clearAll } = useFilterParams();
@@ -56,18 +55,39 @@ const EmployeeItem = () => {
       });
   }, [employees, department, status, name]);
 
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(filteredEmployees);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Employees");
-    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([buf], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
+  const exportToCsv = () => {
+    if (!filteredEmployees || filteredEmployees.length === 0) {
+      return;
+    }
+
+    // 1. Build header row (keys of the object)
+    const headers = Object.keys(filteredEmployees[0]);
+
+    // 2. Build all rows (headers + values)
+    const rows = [
+      headers, // first row: column names
+      ...filteredEmployees.map((emp) => headers.map((h) => emp[h] ?? "")),
+    ];
+
+    // 3. Convert to CSV string with proper escaping
+    const csvContent = rows
+      .map((row) =>
+        row
+          .map((cell) => {
+            const s = String(cell);
+            // Escape if contains quotes, commas, or newlines
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+          })
+          .join(",")
+      )
+      .join("\n");
+
+    // 4. Create blob and trigger download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "employees.xlsx";
+    a.download = "employees.csv";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -136,7 +156,7 @@ const EmployeeItem = () => {
           </div>
           <div className="flex-none">
             <button
-              onClick={exportToExcel}
+              onClick={exportToCsv}
               className="w-full lg:w-auto flex items-center justify-center bg-[#1F6231] hover:bg-[#309d49] text-white font-bold py-2 px-4 rounded"
             >
               <FaFileExcel className="mr-2" />

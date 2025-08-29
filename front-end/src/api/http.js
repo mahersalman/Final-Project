@@ -1,5 +1,5 @@
 import axios from "axios";
-import serverUrl from "config/api";
+import serverUrl from "@config/api";
 
 export const http = axios.create({
   baseURL: `${serverUrl}/api`,

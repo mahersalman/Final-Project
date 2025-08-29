@@ -1,7 +1,7 @@
 // components/EmployeeCard.jsx
 import React, { useEffect, useState } from "react";
 import EditEmployeeForm from "./EditEmployeeForm";
-import { useMe } from "../../hooks/useMe";
+import { useMe } from "@hooks/useMe";
 import { http } from "../../api/http";
 
 function Row({ label, value, full = false, children }) {

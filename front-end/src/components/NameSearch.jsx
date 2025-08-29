@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import useFilterParams from "../hooks/useFilterParams";
+import useFilterParams from "@hooks/useFilterParams";
 
 export default function NameSearch({ value, onChange, className = "" }) {
   const { name, setName } = useFilterParams();

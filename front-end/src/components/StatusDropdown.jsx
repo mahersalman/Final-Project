@@ -1,6 +1,5 @@
 import React from "react";
-import useFilterParams from "../hooks/useFilterParams";
-
+import useFilterParams from "@hooks/useFilterParams";
 const statuses = ["פעיל", "לא פעיל", "מוקפא"];
 
 export default function StatusDropdown({
