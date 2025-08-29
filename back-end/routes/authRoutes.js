@@ -15,7 +15,6 @@ const {
   RESET_TOKEN_TTL_MINUTES,
   generateTempPassword,
 } = require("../utils/password");
-const APP_BASE_URL = process.env.APP_BASE_URL || "http://localhost:3000";
 
 // Login route
 router.post("/login", async (req, res) => {
